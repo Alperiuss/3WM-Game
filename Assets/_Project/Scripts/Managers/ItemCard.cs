@@ -40,7 +40,7 @@ public class ItemCard : MonoBehaviour
 
     private void OnBuyButtonClicked()
     {
-        // 1. GELİŞTİRİLEBİLİR (UPGRADABLE) EŞYA MANTIĞI
+        
         if (isUpgradable)
         {
             if (currentLevel >= maxLevel) return;
@@ -55,8 +55,8 @@ public class ItemCard : MonoBehaviour
                 Debug.Log($"[UPGRADE]: {itemName} upgraded to Level {currentLevel}");
             }
         }
-        // 2. TEK SEFERLİK (SINGLE-PURCHASE) EŞYA MANTIĞI
         else
+
         {
             if (isSinglePurchased) return;
 
@@ -85,7 +85,7 @@ public class ItemCard : MonoBehaviour
 
     private void UpdateCardUI()
     {
-        // GELİŞTİRİLEBİLİR EŞYA İÇİN UI
+        
         if (isUpgradable)
         {
             if (levelText != null)
