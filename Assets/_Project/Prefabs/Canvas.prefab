@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 8699707264000889401}
   - component: {fileID: 3813350562178524515}
   m_Layer: 5
-  m_Name: HeaderPanelUI
+  m_Name: BackgroundUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -29,13 +29,14 @@ RectTransform:
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
-  m_Children: []
+  m_Children:
+  - {fileID: 8722190553698557115}
   m_Father: {fileID: 7526231819129580546}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: 546.6663}
-  m_SizeDelta: {x: 1896, y: 100}
+  m_AnchoredPosition: {x: 0, y: 540}
+  m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 1}
 --- !u!222 &8699707264000889401
 CanvasRenderer:
@@ -58,14 +59,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: UnityEngine.UI::UnityEngine.UI.RawImage
   m_Material: {fileID: 0}
-  m_Color: {r: 0, g: 0, b: 0, a: 0.6156863}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_RaycastTarget: 1
   m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
   m_Maskable: 1
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Texture: {fileID: 0}
+  m_Texture: {fileID: 2800000, guid: f0b3206ba934dd045bd55cd39528d512, type: 3}
   m_UVRect:
     serializedVersion: 2
     x: 0
@@ -109,7 +110,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: 734, y: 0}
-  m_SizeDelta: {x: 160, y: 30}
+  m_SizeDelta: {x: 300, y: 100}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &6694614545071018711
 CanvasRenderer:
@@ -139,8 +140,8 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_Sprite: {fileID: 10905, guid: 0000000000000000f000000000000000, type: 0}
-  m_Type: 1
+  m_Sprite: {fileID: 21300000, guid: 7ddebb6024171414fa88b200c58b5c80, type: 3}
+  m_Type: 0
   m_PreserveAspect: 0
   m_FillCenter: 1
   m_FillMethod: 4
@@ -225,12 +226,12 @@ RectTransform:
   m_Children:
   - {fileID: 1054832417477481859}
   - {fileID: 3375979702606443832}
-  m_Father: {fileID: 7526231819129580546}
+  m_Father: {fileID: 2859353839829746620}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
-  m_AnchorMin: {x: 0.5, y: 0.5}
-  m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -496.66632}
-  m_SizeDelta: {x: 1896, y: 100}
+  m_AnchorMin: {x: 0, y: 0}
+  m_AnchorMax: {x: 1, y: 0}
+  m_AnchoredPosition: {x: 0, y: 111.850006}
+  m_SizeDelta: {x: 0, y: 223.70001}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &630702294668432252
 CanvasRenderer:
@@ -298,7 +299,6 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 8722190553698557115}
   - {fileID: 2859353839829746620}
   - {fileID: 3986752890515928533}
   m_Father: {fileID: 0}
@@ -406,7 +406,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0.5}
   m_AnchorMax: {x: 1, y: 0.5}
-  m_AnchoredPosition: {x: -1596, y: 0}
+  m_AnchoredPosition: {x: -1410, y: 0}
   m_SizeDelta: {x: 200, y: 50}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8367873055443616689
@@ -526,7 +526,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &5582061461969710826
 RectTransform:
   m_ObjectHideFlags: 0
@@ -722,6 +722,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3986752890515928533}
     m_Modifications:
+    - target: {fileID: 1757620600907652606, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: m_Name
+      value: ItemLevelText
+      objectReference: {fileID: 0}
     - target: {fileID: 6415595731226763712, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -802,6 +806,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6760577085168026000, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: levelText
+      value: 
+      objectReference: {fileID: 7592041059523708440}
+    - target: {fileID: 6760577085168026000, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: isUpgradable
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8485935051602116522, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
       propertyPath: m_Name
       value: ItemImage
@@ -811,6 +823,17 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+--- !u!114 &7592041059523708440 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 5233994203971808106, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+  m_PrefabInstance: {fileID: 2449598527821983090}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!224 &8716293433593859250 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 6415595731226763712, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
@@ -904,6 +927,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6760577085168026000, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: isUpgradable
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8485935051602116522, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
       propertyPath: m_Name
       value: ItemImage (6)
@@ -926,6 +953,10 @@ PrefabInstance:
     serializedVersion: 3
     m_TransformParent: {fileID: 3986752890515928533}
     m_Modifications:
+    - target: {fileID: 4601655429569304043, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 9
+      objectReference: {fileID: 0}
     - target: {fileID: 6415595731226763712, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1006,6 +1037,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 7948888868844087011, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: m_Type
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7948888868844087011, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bd311635756c4cc4b8e6f8def18ca079, type: 3}
     - target: {fileID: 8485935051602116522, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
       propertyPath: m_Name
       value: ItemImage (5)
@@ -1312,6 +1351,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 6760577085168026000, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: isUpgradable
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 8485935051602116522, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
       propertyPath: m_Name
       value: ItemImage (3)
@@ -1515,6 +1558,22 @@ PrefabInstance:
     - target: {fileID: 6415595731226763712, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6930440468730226055, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: m_Color.b
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6930440468730226055, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: m_Color.g
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6930440468730226055, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: m_Color.r
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6930440468730226055, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
+      propertyPath: m_Maskable
+      value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 8485935051602116522, guid: d071fc7d435aa0c47aa77e4eaca0bc7b, type: 3}
       propertyPath: m_Name
