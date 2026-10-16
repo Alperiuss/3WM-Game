@@ -161,7 +161,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 116939905}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -321,7 +321,7 @@ GameObject:
   m_Component:
   - component: {fileID: 276752231}
   - component: {fileID: 276752230}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Interactable Object (2)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -371,7 +371,7 @@ GameObject:
   m_Component:
   - component: {fileID: 295411617}
   - component: {fileID: 295411616}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Interactable Object (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -557,7 +557,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 963866227}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -883,7 +883,7 @@ GameObject:
   - component: {fileID: 1951890005}
   - component: {fileID: 1951890004}
   - component: {fileID: 1951890003}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -993,7 +993,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1986134916}
   - component: {fileID: 1986134915}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Interactable Object
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1045,7 +1045,7 @@ GameObject:
   - component: {fileID: 1991841546}
   - component: {fileID: 1991841545}
   - component: {fileID: 1991841544}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1113,7 +1113,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 4f7de63608bad5d4585e4b58d6202ec8, type: 2}
+  - {fileID: 2100000, guid: 61885929c7bd10c40997394156756476, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1233,7 +1233,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2027082776}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Model
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1268,7 +1268,7 @@ GameObject:
   - component: {fileID: 2031334466}
   - component: {fileID: 2031334465}
   - component: {fileID: 2031334464}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Cube (1)
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -1336,7 +1336,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 4f7de63608bad5d4585e4b58d6202ec8, type: 2}
+  - {fileID: 2100000, guid: 61885929c7bd10c40997394156756476, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -1902,8 +1902,9 @@ MonoBehaviour:
   interactionDistance: 2
   interactableLayer:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 8
   interactionPromptUI: {fileID: 457373616}
+  interactActionReference: {fileID: 1781555164194001046, guid: 052faaac586de48259a63d0c4782560b, type: 3}
 --- !u!4 &8997996947450151385
 Transform:
   m_ObjectHideFlags: 0

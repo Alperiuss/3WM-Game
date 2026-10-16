@@ -1,13 +1,29 @@
 using UnityEngine;
+using UnityEngine.InputSystem; // Yeni Input System kütüphanesi
 
 public class PlayerRaycast : MonoBehaviour
 {
     [Header("Raycast Settings")]
-    [SerializeField] float interactionDistance = 3f;
-    [SerializeField] LayerMask interactableLayer;
+    [SerializeField] private float interactionDistance = 3f;
+    [SerializeField] private LayerMask interactableLayer;
 
     [Header("UI Settings")]
-    [SerializeField] GameObject interactionPromptUI;
+    [SerializeField] private GameObject interactionPromptUI;
+
+    [Header("Input Action")]
+    [SerializeField] private InputActionReference interactActionReference; // Input Action referansı
+
+    private void OnEnable()
+    {
+        if (interactActionReference != null)
+            interactActionReference.action.Enable();
+    }
+
+    private void OnDisable()
+    {
+        if (interactActionReference != null)
+            interactActionReference.action.Disable();
+    }
 
     void Update()
     {
@@ -21,7 +37,6 @@ public class PlayerRaycast : MonoBehaviour
 
         bool foundInteractable = false;
 
-        // Işın bir şeye çarpıyor mu?
         if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
         {
             InteractableObject interactable = hit.collider.GetComponent<InteractableObject>();
@@ -30,19 +45,18 @@ public class PlayerRaycast : MonoBehaviour
                 interactable = hit.collider.GetComponentInParent<InteractableObject>();
             }
 
-            // Geçerli ve etkileşime açık bir objeye bakıyorsak
             if (interactable != null && interactable.IsInteractable)
             {
                 foundInteractable = true;
 
-                if (Input.GetKeyDown(KeyCode.E))
+                // Yeni Input Sistemi üzerinden Interact tuşuna (E veya Gamepad) basıldı mı?
+                if (interactActionReference != null && interactActionReference.action.WasPressedThisFrame())
                 {
                     interactable.Interact();
                 }
             }
         }
 
-        // UI durumunu her karede net olarak güncelle (Bakıyorsan açık, bakmıyorsan kapalı)
         if (interactionPromptUI != null)
         {
             interactionPromptUI.SetActive(foundInteractable);
@@ -51,16 +65,12 @@ public class PlayerRaycast : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        // Gizmos rengini sarı yap
         Gizmos.color = Color.yellow;
-
-        // Işının başlangıç ve bitiş noktasını çiz
         Gizmos.DrawRay(transform.position, transform.forward * interactionDistance);
 
-        // Eğer bir şeye çarptıysa oraya küçük bir küp çiz
         if (Physics.Raycast(transform.position, transform.forward, out RaycastHit hit, interactionDistance, interactableLayer))
         {
-            Gizmos.color = Color.red; // Çarpınca kırmızı
+            Gizmos.color = Color.red;
             Gizmos.DrawWireCube(hit.point, Vector3.one * 0.1f);
         }
     }
