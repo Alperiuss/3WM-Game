@@ -1301,67 +1301,66 @@ MonoBehaviour:
     typingSpeed: 0.03
     displayDuration: 1
     messages:
-    - "\"\u0130yi g\xFCnler say\u0131n dinleyenler, ana haber b\xFClteniyle kar\u015F\u0131n\u0131zday\u0131z.i\""
-    - "\"Bilim d\xFCnyas\u0131ndan gelen son dakika geli\u015Fmeleriyle yay\u0131na
-      ba\u015Fl\u0131yoruz. \""
-    - "\"Sismologlar ve jeofizik uzmanlar\u0131, D\xFCnya'n\u0131n \xE7ekirde\u011Finde
-      daha \xF6nce hi\xE7 rastlanmam\u0131\u015F, olduk\xE7a garip hareketlilikler
-      tespit etti. \""
-    - "\"Sismologlar ve jeofizik uzmanlar\u0131, D\xFCnya'n\u0131n \xE7ekirde\u011Finde
-      daha \xF6nce hi\xE7 rastlanmam\u0131\u015F, olduk\xE7a garip hareketlilikler
-      tespit etti. \""
-    - "\"Uzmanlar, insanl\u0131k tarihi boyunca bir benzeri g\xF6r\xFClmemi\u015F
-      bu anormalli\u011Fin nedenini hen\xFCz \xE7\xF6zebilmi\u015F de\u011Fil.\""
-    - "\"Bilim heyeti, \xF6n\xFCm\xFCzdeki birka\xE7 g\xFCn boyunca t\xFCm vatanda\u015Flar\u0131m\u0131z\u0131n
-      her olas\u0131l\u0131\u011Fa kar\u015F\u0131 dikkatli ve tedbirli olmas\u0131n\u0131
-      tavsiye ediyor. \""
-    - "\"Geli\u015Fmeleri aktarmaya devam edece\u011Fiz. \r\n\u0130yi g\xFCnler!
-      \""
+    - '"Good afternoon, dear listeners. Welcome to the main news bulletin."'
+    - '"We begin our broadcast with breaking news from the world of science."'
+    - '"Seismologists and geophysicists have detected highly unusual, previously
+      unseen activity in the Earth''s core."'
+    - '"Experts have yet to determine the cause of this anomaly, which is unprecedented
+      in human history."'
+    - '"The scientific board advises all citizens to remain vigilant and take precautions
+      against all possibilities over the next few days."'
+    - '"We will continue to keep you updated on the developments."'
   - waveNumber: 2
     typingSpeed: 0.03
     displayDuration: 1
     messages:
-    - "Bug\xFCn haberimiz yine \xE7ekirdekte ger\xE7ekle\u015Fen hareketlerle devam
-      ediyor."
-    - "D\xFCn ya\u015Fanan olaylar bunun rastgele olu\u015Fmad\u0131\u011F\u0131n\u0131
-      ve devam\u0131n\u0131n gelece\u011Fini g\xF6steriyor."
-    - "B\xFCy\xFCk depremlere sebep olabilir o y\xFCzden l\xFCtfen evdeki e\u015Fyalar\u0131n\u0131z\u0131
-      kontrol edin."
-    - "Dolaplar\u0131n sabit oldu\u011Funa, Oca\u011F\u0131n kapat\u0131ld\u0131\u011F\u0131na
-      ve ayr\u0131ca Elektrik ka\xE7a..."
-    - Bir dakika...
-    - "B\xFCy\xFCk bir geli\u015Fme ile beraberiz. Birazdan orta \xE7apl\u0131 bir
-      deprem olacak b\xFCt\xFCn vatanda\u015Flar\u0131m\u0131z haz\u0131rl\u0131kl\u0131
-      olsun"
+    - '"Unfortunately, today we continue our bulletin with those alarming movements
+      taking place in the core."'
+    - '"The latest measurements from yesterday indicate that these movements are
+      not random and that their impact will continue to grow."'
+    - '"Experts are issuing severe warnings that this situation could trigger major
+      earthquakes very soon!"'
+    - '"Please check the items in your home right now: Ensure that your cabinets
+      are secured to the walls, that your stove is completely turned off, and also
+      check for any electrical lea..."'
+    - '"Wait a minute! Dear listeners, a major breaking news update has just reached
+      our studio!"'
+    - '"Yes, it is currently being confirmed by the center: A moderate earthquake
+      wave will strike in just a few minutes!"'
+    - '"All citizens must immediately move to safe areas, be prepared!"'
   - waveNumber: 3
     typingSpeed: 0.03
     displayDuration: 1
     messages:
-    - "D\xFCn ki ya\u015Fanan kazadan sonra b\xFCt\xFCn vatanda\u015Flar\u0131m\u0131za
-      ge\xE7mi\u015F olsun dileklerimi iletiyorum."
-    - "Ne yaz\u0131k ki bu ya\u015Fananlar bilim insanlar\u0131na g\xF6re daha b\xFCy\xFCk
-      bir depremin habercisi oldu\u011Fu s\xF6yleniyor."
-    - "Ve bizimde yapabilece\u011Fim en \xF6nemli ve gerekli \u015Fey evde g\xFCvenli\u011Fi
-      sa\u011Flamak."
-    - "Ayr\u0131ca son testlere g\xF6re deprem an\u0131nda panik yapanlar\u0131n
-      yanl\u0131\u015F kararlar almaya daha yatk\u0131n oldu\u011Funu g\xF6steriyor."
-    - "L\xFCtfen stres seviyenizi belli bir seviye de tutun. Bunun i\xE7in sizi rahats\u0131z
-      eden \u015Feyleri kapatabilirsiniz."
-    - "L\xFCtfen stres seviyenizi belli bir seviye de tutun. Bunun i\xE7in sizi rahats\u0131z
-      eden \u015Feyleri kapatabilirsiniz."
-    - "Olamaz! Yeniden bir deprem geldi\u011Fi s\xF6yleniyor ve bu daha b\xFCy\xFCk
-      olacak deniyor. L\xFCtfen panik yapmay\u0131n!"
+    - '"We extend our heartfelt well wishes to all citizens affected by yesterday''s
+      tremors and accidents."'
+    - '"Unfortunately, according to scientists, yesterday''s events are not the end;
+      they are said to be a precursor to a much larger mainshock."'
+    - '"The most important and necessary action we can take right now is to fully
+      ensure our indoor safety."'
+    - '"Furthermore, recent tests and psychological studies show that individuals
+      who panic during an earthquake are much more prone to making poor decisions."'
+    - '"Please keep your stress levels under control. To help with this, you can
+      turn off any devices or sounds in your environment that cause you discomfort
+      or panic."'
+    - '"Oh no! The seismic sensors are sounding the alarm again! Another earthquake
+      wave is incoming, and this time it is said to be much larger!"'
+    - '"Please do not panic; take the drop, cover, and hold on position!!"'
   - waveNumber: 4
     typingSpeed: 0.03
     displayDuration: 1
     messages:
-    - "Ya\u015Fanan b\xFCy\xFCk olaylardan sonra yeniden t\xFCm vatanda\u015Flar\u0131m\u0131za
-      ge\xE7mi\u015F olsun diyoruz"
-    - "Bilim insanlar\u0131na g\xF6re bug\xFCn son ve en b\xFCy\xFCk deprem bekleniyor.
-      Bundan dolay\u0131 iyice haz\u0131rlay\u0131n."
-    - "Elektrik ka\xE7aklar\u0131na ve hayat \xFC\xE7genine iyice dikkat edin."
-    - "T\xFCm vatanda\u015Flar\u0131m\u0131za bol \u015Fans diliyoruz. Haz\u0131r
-      olun!"
+    - '"Following these relentless major disasters, we once again extend our heartfelt
+      well wishes to all our citizens..."'
+    - '"And now, we move on to the most critical announcement."'
+    - '"According to the latest reports from the scientific board, the final and
+      largest earthquake, caused by the rupture in the core, is expected today."'
+    - '"Therefore, prepare yourselves and your surroundings thoroughly until the
+      very last moment."'
+    - '"Check your circuit breakers and wiring for electrical leaks, and establish
+      a safe triangle of life area for yourselves."'
+    - '"We wish all our citizens the best of luck... May God help us all. Brace yourselves,
+      here it comes!"'
   radioPanel: {fileID: 827184521}
   radioText: {fileID: 587228510}
 --- !u!1001 &974472688
@@ -1722,17 +1721,6 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 10b8fcfa5a7d8e64da5a75ac32515129, type: 3}
---- !u!114 &1076212652 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 8573744982417890885, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
-  m_PrefabInstance: {fileID: 1372969275}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
 --- !u!1001 &1100618062
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -3782,15 +3770,15 @@ PrefabInstance:
     - target: {fileID: 7979577096179051327, guid: 96427d1cb07d5cb4ea3586caadfeddf0, type: 3}
       propertyPath: warningText
       value: 
-      objectReference: {fileID: 1585426234}
+      objectReference: {fileID: 0}
     - target: {fileID: 7979577096179051327, guid: 96427d1cb07d5cb4ea3586caadfeddf0, type: 3}
       propertyPath: warningImage
       value: 
-      objectReference: {fileID: 1330018882}
+      objectReference: {fileID: 0}
     - target: {fileID: 7979577096179051327, guid: 96427d1cb07d5cb4ea3586caadfeddf0, type: 3}
       propertyPath: warningPanel
       value: 
-      objectReference: {fileID: 1708063541}
+      objectReference: {fileID: 0}
     - target: {fileID: 9027036903574128902, guid: 96427d1cb07d5cb4ea3586caadfeddf0, type: 3}
       propertyPath: m_Name
       value: CurrencyManager
