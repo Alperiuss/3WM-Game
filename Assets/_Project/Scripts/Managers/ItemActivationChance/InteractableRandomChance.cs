@@ -118,7 +118,7 @@ public class InteractableRandomChance : MonoBehaviour
         }
 
         // Gün ilerledikçe aktif olacak eşya sayısı artar (1. gün 3, 2. gün 4 vb.)
-        int countToActivate = Mathf.Min(baseActiveCount + (currentDay - 1), shuffledList.Count);
+        int countToActivate = Mathf.Min(baseActiveCount + 2, shuffledList.Count);
         remainingActiveCount = countToActivate;
 
         for (int i = 0; i < countToActivate; i++)
@@ -150,9 +150,6 @@ public class InteractableRandomChance : MonoBehaviour
 
         if (survivalMessageUI != null)
             survivalMessageUI.SetActive(true);
-
-        if (timerText != null)
-            timerText.gameObject.SetActive(false);
     }
 
     private IEnumerator TriggerEarthquakeRoutine()
@@ -192,6 +189,7 @@ public class InteractableRandomChance : MonoBehaviour
         {
             Debug.Log(">>> Harika! Gün " + currentDay + " başarıyla atlatıldı.");
             yield return new WaitForSeconds(2f);
+            isEarthquakeActive = false;
             StartNewDay(); // Sonraki güne geç
         }
 
