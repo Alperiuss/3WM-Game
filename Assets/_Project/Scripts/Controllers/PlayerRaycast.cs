@@ -13,6 +13,9 @@ public class PlayerRaycast : MonoBehaviour
     [Header("Input Action")]
     [SerializeField] private InputActionReference interactActionReference; // Input Action referansı
 
+    private float currentHoldTime = 0f;
+    private InteractableObject currentTarget;
+
     private void OnEnable()
     {
         if (interactActionReference != null)
@@ -36,6 +39,7 @@ public class PlayerRaycast : MonoBehaviour
         RaycastHit hit;
 
         bool foundInteractable = false;
+        InteractableObject hitInteractable = null;
 
         if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
         {
@@ -48,13 +52,43 @@ public class PlayerRaycast : MonoBehaviour
             if (interactable != null && interactable.IsInteractable)
             {
                 foundInteractable = true;
+                hitInteractable = interactable;
+            }
+        }
 
-                // Yeni Input Sistemi üzerinden Interact tuşuna (E veya Gamepad) basıldı mı?
-                if (interactActionReference != null && interactActionReference.action.WasPressedThisFrame())
+        // Eğer baktığımız obje değiştiyse veya artık bakmıyorsak süreyi sıfırla
+        if (currentTarget != hitInteractable)
+        {
+            currentTarget = hitInteractable;
+            currentHoldTime = 0f;
+        }
+
+        // Eğer geçerli bir objeye bakıyorsak
+        if (currentTarget != null)
+        {
+            // E tuşuna basılıyor mu? (Basılı tutma kontrolü)
+            if (interactActionReference != null && interactActionReference.action.IsPressed())
+            {
+                currentHoldTime += Time.deltaTime;
+                Debug.Log("Basılı tutuluyor... Süre: " + currentHoldTime.ToString("F1") + " / " + currentTarget.RequiredHoldTime);
+
+                // Süre dolduysa etkileşimi gerçekleştir
+                if (currentHoldTime >= currentTarget.RequiredHoldTime)
                 {
-                    interactable.Interact();
+                    currentTarget.Interact();
+                    currentHoldTime = 0f;
+                    currentTarget = null;
                 }
             }
+            else
+            {
+                // Tuş bırakıldıysa sayacı sıfırla
+                currentHoldTime = 0f;
+            }
+        }
+        else
+        {
+            currentHoldTime = 0f;
         }
 
         if (interactionPromptUI != null)
