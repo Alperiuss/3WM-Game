@@ -272,10 +272,6 @@ public class InteractableRandomChance : MonoBehaviour
 
         if (!isDayCompletedSuccessfully)
         {
-            if (timerText != null)
-            {
-                timerText.text = "ÖLDÜN!";
-            }
             PlayerDeath();
         }
         else
