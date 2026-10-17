@@ -9,17 +9,17 @@ public class ItemCard : MonoBehaviour
     [SerializeField] private string itemName = "Kitchen Item";
 
     [Header("Upgrade Settings")]
-    [Tooltip("Check this if the item can be upgraded multiple times (e.g. Home upgrades). Uncheck for single-purchase items.")]
+    [Tooltip("Check this if the item can be upgraded multiple times. Uncheck for single-purchase items.")]
     [SerializeField] private bool isUpgradable = false; 
     
     [SerializeField] private int basePrice = 100;
-    [SerializeField] private float priceMultiplier = 1.5f; // Only used if isUpgradable = true
-    [SerializeField] private int maxLevel = 5;            // Only used if isUpgradable = true
+    [SerializeField] private float priceMultiplier = 1.5f; 
+    [SerializeField] private int maxLevel = 5;            
 
     [Header("UI References")]
     [SerializeField] private Button buyButton;
     [SerializeField] private TMP_Text priceText;
-    [SerializeField] private TMP_Text levelText; // Level'ı gösteren küçük metin
+    [SerializeField] private TMP_Text levelText;
 
     // Runtime state
     private int currentLevel = 0;
@@ -40,7 +40,7 @@ public class ItemCard : MonoBehaviour
 
     private void OnBuyButtonClicked()
     {
-        
+        // 1. GELİŞTİRİLEBİLİR EŞYA MANTIĞI
         if (isUpgradable)
         {
             if (currentLevel >= maxLevel) return;
@@ -55,8 +55,8 @@ public class ItemCard : MonoBehaviour
                 Debug.Log($"[UPGRADE]: {itemName} upgraded to Level {currentLevel}");
             }
         }
+        // 2. TEK SEFERLİK EŞYA MANTIĞI
         else
-
         {
             if (isSinglePurchased) return;
 
@@ -85,12 +85,28 @@ public class ItemCard : MonoBehaviour
 
     private void UpdateCardUI()
     {
-        
+        // Eşyanın tamamlanıp tamamlanmadığını kontrol et
+        bool isCompleted = isUpgradable ? (currentLevel >= maxLevel) : isSinglePurchased;
+
+        // BuyButton üzerindeki Image'in şeffaflığını ayarla
+        if (buyButton != null)
+        {
+            Image buttonImage = buyButton.GetComponent<Image>();
+            if (buttonImage != null)
+            {
+                Color color = buttonImage.color;
+                // Tamamlandıysa tam görünür (alpha = 1), tamamlanmadıysa şeffaf (alpha = 0)
+                color.a = isCompleted ? 1f : 0f; 
+                buttonImage.color = color;
+            }
+        }
+
+        // --- GELİŞTİRİLEBİLİR EŞYA UI ---
         if (isUpgradable)
         {
             if (levelText != null)
             {
-                levelText.gameObject.SetActive(true); // Level yazısını göster
+                levelText.gameObject.SetActive(true);
                 levelText.text = (currentLevel >= maxLevel) ? "MAX LEVEL" : $"Lvl {currentLevel}";
             }
 
@@ -108,12 +124,12 @@ public class ItemCard : MonoBehaviour
                 }
             }
         }
-        // TEK SEFERLİK EŞYA İÇİN UI
+        // --- TEK SEFERLİK EŞYA UI ---
         else
         {
             if (levelText != null)
             {
-                levelText.gameObject.SetActive(false); // Tek seferlik eşyada Level yazısını gizle
+                levelText.gameObject.SetActive(false);
             }
 
             if (priceText != null && buyButton != null)
@@ -132,7 +148,6 @@ public class ItemCard : MonoBehaviour
         }
     }
 
-    // KAYIT VE YÜKLEME MANTIĞI
     private void SaveData()
     {
         if (isUpgradable)
@@ -158,7 +173,7 @@ public class ItemCard : MonoBehaviour
         }
     }
 
-    // Diğer script'lerin eşya durumunu okuyabilmesi için public metotlar
+    // Public Getters
     public bool IsUpgradable => isUpgradable;
     public int GetCurrentLevel() => currentLevel;
     public bool IsItemPurchased() => isUpgradable ? (currentLevel > 0) : isSinglePurchased;
