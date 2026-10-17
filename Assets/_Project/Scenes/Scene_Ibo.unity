@@ -1160,6 +1160,42 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 532418702858593864, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1595676263691242057, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
+      propertyPath: itemName
+      value: LOCKER
+      objectReference: {fileID: 0}
+    - target: {fileID: 2433764663591734656, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
+      propertyPath: itemName
+      value: ALARM
+      objectReference: {fileID: 0}
+    - target: {fileID: 3630274519107515255, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
+      propertyPath: itemName
+      value: SCREW
+      objectReference: {fileID: 0}
+    - target: {fileID: 3956529071664967352, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
+      propertyPath: itemName
+      value: FAST REPAIR KIT
+      objectReference: {fileID: 0}
+    - target: {fileID: 4094934309032347135, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
+      propertyPath: itemName
+      value: DISASTER BAG
+      objectReference: {fileID: 0}
+    - target: {fileID: 5742541516373480229, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
+      propertyPath: itemName
+      value: ELECTRICAL TAPE
+      objectReference: {fileID: 0}
+    - target: {fileID: 6036924427065736420, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
+      propertyPath: itemName
+      value: CALMING MEDICATION
+      objectReference: {fileID: 0}
+    - target: {fileID: 6951283562686702447, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
+      propertyPath: itemName
+      value: HOUSE IMPROVE
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
