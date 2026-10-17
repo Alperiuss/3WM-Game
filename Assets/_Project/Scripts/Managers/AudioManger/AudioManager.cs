@@ -8,8 +8,7 @@ public class AudioManager : MonoBehaviour
 
     [Header("Audio Mixer Settings")]
     [SerializeField] private AudioMixer mainAudioMixer;
-    
-    // AudioMixer'daki Exposed Parameter İsimleri
+
     public const string MASTER_KEY = "MasterVolume";
     public const string MUSIC_KEY = "MusicVolume";
     public const string SFX_KEY = "SFXVolume";
@@ -20,6 +19,9 @@ public class AudioManager : MonoBehaviour
 
     [Header("Audio Clips List")]
     [SerializeField] private Sound[] sounds;
+
+    // Statik Dinleyici Olayı (Event listener)
+    public static Action<string, float> OnVolumeChanged;
 
     private void Awake()
     {
@@ -37,35 +39,50 @@ public class AudioManager : MonoBehaviour
         InitializeSoundDictionary();
     }
 
+    private void OnEnable()
+    {
+        // Ses değişim olayına kendisini dinleyici olarak ekler
+        OnVolumeChanged += HandleVolumeChange;
+    }
+
+    private void OnDisable()
+    {
+        // Temizlik: Dinleyici bağlantısını koparır
+        OnVolumeChanged -= HandleVolumeChange;
+    }
+
+    // 1. DÜZELTME: for döngüsü ve null kontrolü eklendi
     private void InitializeSoundDictionary()
     {
-        foreach (Sound s in sounds)
+        if (sounds == null) return;
+
+        for (int i = 0; i < sounds.Length; i++)
         {
-            if (s.source == null)
+            if (sounds[i] == null) continue;
+
+            if (sounds[i].source == null)
             {
-                s.source = gameObject.AddComponent<AudioSource>();
+                sounds[i].source = gameObject.AddComponent<AudioSource>();
             }
-            s.source.clip = s.clip;
-            s.source.volume = s.volume;
-            s.source.pitch = s.pitch;
-            s.source.loop = s.loop;
+
+            sounds[i].source.clip = sounds[i].clip;
+            sounds[i].source.volume = sounds[i].volume;
+            sounds[i].source.pitch = sounds[i].pitch;
+            sounds[i].source.loop = sounds[i].loop;
         }
     }
 
-    #region Volume Control Methods
+    #region Listener Handler (Event Tarafından Tetiklenir)
 
-    // Slider'dan gelen 0.0001 - 1 değerini desibel birimine çevirip AudioMixer'a aktarır
-    public void SetGroupVolume(string parameterName, float sliderValue)
+    private void HandleVolumeChange(string parameterName, float sliderValue)
     {
-        if (mainAudioMixer == null)
-        {
-            Debug.LogWarning("[AudioManager]: AudioMixer atanmadı!");
-            return;
-        }
+        if (mainAudioMixer == null) return;
 
+        // Desibel dönüşümü
         float dB = Mathf.Log10(Mathf.Clamp(sliderValue, 0.0001f, 1f)) * 20f;
         mainAudioMixer.SetFloat(parameterName, dB);
 
+        // Kaydet
         PlayerPrefs.SetFloat(parameterName, sliderValue);
         PlayerPrefs.Save();
     }
@@ -79,16 +96,21 @@ public class AudioManager : MonoBehaviour
 
     #region Play Audio Methods
 
-    // İsim ile ses efekti çalma: AudioManager.Instance.PlaySFX("ButtonClick");
     public void PlaySFX(string name)
     {
-        Sound s = Array.Find(sounds, sound => sound.name == name);
+        if (sounds == null) return;
+
+        Sound s = Array.Find(sounds, sound => sound != null && sound.name == name);
         if (s == null)
         {
             Debug.LogWarning($"[AudioManager]: '{name}' adında ses efekti bulunamadı!");
             return;
         }
-        s.source.Play();
+
+        if (s.source != null)
+        {
+            s.source.Play();
+        }
     }
 
     public void PlayOneShot(AudioClip clip, float volume = 1f)
@@ -111,18 +133,19 @@ public class AudioManager : MonoBehaviour
     #endregion
 }
 
+// 2. DÜZELTME: Eksik olan Sound sınıfı dosyanın altına eklendi
 [System.Serializable]
 public class Sound
 {
     public string name;
     public AudioClip clip;
-    
+
     [Range(0f, 1f)]
     public float volume = 1f;
-    
+
     [Range(0.1f, 3f)]
     public float pitch = 1f;
-    
+
     public bool loop = false;
 
     [HideInInspector]

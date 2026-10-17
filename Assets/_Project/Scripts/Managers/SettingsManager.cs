@@ -11,19 +11,21 @@ public class SettingsManager : MonoBehaviour
 
     private void Start()
     {
-        // 1. Ses Ayarını Yükle ve Dinleyici Bağla
-        if (masterVolumeSlider != null && AudioManager.Instance != null)
+        // 1. MASTER VOLUME SLIDER
+        if (masterVolumeSlider != null)
         {
-            float savedMasterVol = AudioManager.Instance.GetGroupVolume(AudioManager.MASTER_KEY, 1f);
+            // Kayıtlı ses değerini al (Varsayılan 1f)
+            float savedMasterVol = PlayerPrefs.GetFloat(AudioManager.MASTER_KEY, 1f);
             masterVolumeSlider.value = savedMasterVol;
-            
-            // Başlangıç değerini Mixer'a uygula
-            AudioManager.Instance.SetGroupVolume(AudioManager.MASTER_KEY, savedMasterVol);
 
-            masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeChanged);
+            // Oyun ilk açıldığında kaydedilmiş sesi AudioManager'a haber ver
+            AudioManager.OnVolumeChanged?.Invoke(AudioManager.MASTER_KEY, savedMasterVol);
+
+            // Slider her kaydırıldığında event tetikle
+            masterVolumeSlider.onValueChanged.AddListener(OnMasterVolumeSliderChanged);
         }
 
-        // 2. Tam Ekran Ayarını Yükle ve Dinleyici Bağla
+        // 2. FULLSCREEN TOGGLE
         if (fullscreenToggle != null)
         {
             bool isFullscreen = PlayerPrefs.GetInt("SavedFullscreen", 1) == 1;
@@ -34,12 +36,10 @@ public class SettingsManager : MonoBehaviour
         }
     }
 
-    private void OnMasterVolumeChanged(float value)
+    private void OnMasterVolumeSliderChanged(float value)
     {
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.SetGroupVolume(AudioManager.MASTER_KEY, value);
-        }
+        // Doğrudan metot çağırmak yerine Event'e (Listener) haber veriyoruz
+        AudioManager.OnVolumeChanged?.Invoke(AudioManager.MASTER_KEY, value);
     }
 
     public void SetFullscreen(bool isFullscreen)

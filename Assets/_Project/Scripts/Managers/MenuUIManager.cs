@@ -1,6 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
-using UnityEngine.SceneManagement;
+using UnityEngine.SceneManagement; // SAHNE GEÇİŞLERİ İÇİN GEREKLİ KÜTÜPHANE
 
 public class MenuUIManager : MonoBehaviour
 {
@@ -18,11 +18,10 @@ public class MenuUIManager : MonoBehaviour
     [Header("Settings Panel Buttons")]
     [SerializeField] private Button settingsBackButton;
 
-    [Header("Game Flow References")]
-    [Tooltip("Oyun başladığında aktif olacak Oyun İçi UI / HUD (Varsa)")]
-    [SerializeField] private GameObject gameHUDCanvas;
+    [Header("Scene Settings")]
+    [Tooltip("Play butonuna basıldığında açılacak sahnenin tam adı")]
+    [SerializeField] private string targetSceneName = "MainScene"; 
 
-    // Runtime States
     public bool IsGameStarted { get; private set; } = false;
 
     private void Awake()
@@ -54,34 +53,34 @@ public class MenuUIManager : MonoBehaviour
 
     #region Button Actions
 
-    // OYUNA BAŞLAMA
+    // PLAY BUTONUNA BASILDIĞINDA SAHNE DEĞİŞTİRİR
     private void OnPlayButtonClicked()
     {
         IsGameStarted = true;
-        Debug.Log("[MenuUI]: 1. Gün Başladı!");
+        Debug.Log($"[MenuUI]: {targetSceneName} sahnesine geçiliyor...");
 
-        // Menü panellerini kapat
-        if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
-        if (settingsPanel != null) settingsPanel.SetActive(false);
-
-        // Oyun içi arayüzü aç
-        if (gameHUDCanvas != null) gameHUDCanvas.SetActive(true);
+        // Belirtilen sahneyi yükler
+        if (!string.IsNullOrEmpty(targetSceneName))
+        {
+            SceneManager.LoadScene(targetSceneName);
+        }
+        else
+        {
+            Debug.LogError("[MenuUI]: Hedef sahne adı (Target Scene Name) boş bırakılmış!");
+        }
     }
 
-    // AYARLAR
     private void OnSettingsButtonClicked()
     {
         if (mainMenuPanel != null) mainMenuPanel.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(true);
     }
 
-    // AYARLARDAN GERİ DÖNÜŞ
     private void OnSettingsBackClicked()
     {
         ShowMainMenu();
     }
 
-    // ÇIKIŞ
     private void OnExitButtonClicked()
     {
         Debug.Log("[MenuUI]: Oyundan çıkılıyor...");
