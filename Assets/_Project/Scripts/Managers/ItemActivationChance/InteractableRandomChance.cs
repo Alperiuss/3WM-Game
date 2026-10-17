@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using System.Collections.Generic;
 using System.Collections;
 using TMPro;
@@ -9,22 +10,33 @@ public class InteractableRandomChance : MonoBehaviour
 
     [Header("Settings")]
     [SerializeField] private List<InteractableObject> allInteractable;
-    [SerializeField] private int baseActiveCount = 3; // 1. gün kaç eşya aktif olsun?
+    [SerializeField] private int baseActiveCount = 3; // 1. gün başlangıç eşya sayısı
 
     [Header("Timer Settings")]
-    [SerializeField] private float dayTimeLimit = 35f; // Günlük süre sınırı
+    [SerializeField] private float dayTimeLimit = 35f;
     private float currentTimer;
     private bool isTimerRunning = false;
 
     [Header("Earthquake Settings")]
-    [SerializeField] private float earthquakeDuration = 5f;          // Deprem süresi
-    [SerializeField] private float baseEarthquakeMagnitude = 0.1f;   // Temel sarsıntı şiddeti
-    [SerializeField] private float magnitudeMultiplierPerDay = 0.08f; // Gün başına artan şiddet çarpanı
-    private int currentDay = 0;
+    [SerializeField] private float earthquakeDuration = 5f;
+    [SerializeField] private float baseEarthquakeMagnitude = 0.1f;
+    [SerializeField] private float magnitudeMultiplierPerDay = 0.08f;
+
+    [SerializeField] private int currentDay = 1; // 1. gün olarak net başlatıyoruz
+
+    [Header("Stress Mechanics (Day 2+)")]
+    [SerializeField] private Slider stressSlider;
+    [SerializeField] private float maxStress = 100f;
+    [SerializeField] private float baseStressFillRate = 3f;
+    [SerializeField] private float noiseMakerPenaltyRate = 2f;
+
+    private float currentStress = 0f;
+    private bool isStressActive = false;
+    private int activeNoiseMakersCount = 0;
 
     [Header("UI Settings")]
-    [SerializeField] private GameObject survivalMessageUI; // "Saklan ve Kurtul!" yazısı
-    [SerializeField] private TextMeshProUGUI timerText;    // Sayaç ve durum metni
+    [SerializeField] private GameObject survivalMessageUI;
+    [SerializeField] private TextMeshProUGUI timerText;
 
     private int remainingActiveCount = 0;
     private bool isEarthquakeActive = false;
@@ -44,35 +56,59 @@ public class InteractableRandomChance : MonoBehaviour
         if (survivalMessageUI != null)
             survivalMessageUI.SetActive(false);
 
-        StartNewDay();
+        if (stressSlider != null)
+        {
+            stressSlider.maxValue = maxStress;
+            stressSlider.gameObject.SetActive(false);
+        }
+
+        // DİKKAT: Burada otomatik StartDay() ÇAĞIRMIYORUZ! 
+        // Günü başlatma yetkisini tamamen DayManager ve radyo akışına bıraktık.
     }
 
     private void Update()
     {
-        if (isTimerRunning)
+        if (!isTimerRunning) return;
+
+        if (currentTimer > 0f)
         {
-            if (currentTimer > 0f)
+            currentTimer -= Time.deltaTime;
+
+            if (isStressActive)
             {
-                currentTimer -= Time.deltaTime;
+                float currentFillRate = baseStressFillRate + (activeNoiseMakersCount * noiseMakerPenaltyRate);
+                currentStress += currentFillRate * Time.deltaTime;
+                currentStress = Mathf.Clamp(currentStress, 0f, maxStress);
 
-                if (timerText != null)
-                {
-                    int minutes = Mathf.FloorToInt(currentTimer / 60f);
-                    int seconds = Mathf.FloorToInt(currentTimer % 60f);
-                    timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
-                }
+                if (stressSlider != null)
+                    stressSlider.value = currentStress;
 
-                if (currentTimer <= 0f)
+                if (currentStress >= maxStress)
                 {
-                    currentTimer = 0f;
+                    currentStress = maxStress;
                     isTimerRunning = false;
-
-                    StartCoroutine(TriggerEarthquakeRoutine());
+                    StartCoroutine(StressOverloadDeathRoutine());
+                    return;
                 }
+            }
+
+            if (timerText != null)
+            {
+                int minutes = Mathf.FloorToInt(currentTimer / 60f);
+                int seconds = Mathf.FloorToInt(currentTimer % 60f);
+                timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
+            }
+
+            if (currentTimer <= 0f)
+            {
+                currentTimer = 0f;
+                isTimerRunning = false;
+                StartCoroutine(TriggerEarthquakeRoutine());
             }
         }
     }
 
+    // Günü resmi olarak başlatan ana metot
     public void StartNewDay()
     {
         if (isEarthquakeActive) return;
@@ -80,7 +116,6 @@ public class InteractableRandomChance : MonoBehaviour
         if (survivalMessageUI != null)
             survivalMessageUI.SetActive(false);
 
-        currentDay++;
         Debug.Log("--- GÜN " + currentDay + " BAŞLADI ---");
 
         if (currentDay > 4)
@@ -91,6 +126,17 @@ public class InteractableRandomChance : MonoBehaviour
         }
 
         isDayCompletedSuccessfully = false;
+        activeNoiseMakersCount = 0;
+        currentStress = 0f;
+
+        // Stres SADECE 2. gün ve sonrasında aktif olur (1. günden kesinlikle açılmaz)
+        isStressActive = (currentDay >= 2);
+
+        if (stressSlider != null)
+        {
+            stressSlider.gameObject.SetActive(isStressActive);
+            stressSlider.value = 0f;
+        }
 
         if (allInteractable == null || allInteractable.Count == 0)
         {
@@ -115,8 +161,10 @@ public class InteractableRandomChance : MonoBehaviour
             shuffledList[randomIndex] = temp;
         }
 
-        int countToActivate = Mathf.Min(baseActiveCount, shuffledList.Count);
-        baseActiveCount += 2;
+        // HATA ÇÖZÜMÜ: Eşya sayısını her gün sabit bir formülle artırıyoruz (Sürekli üstüne ekleme hatası bitti)
+        int targetActiveCount = baseActiveCount + ((currentDay - 1) * 2);
+        int countToActivate = Mathf.Min(targetActiveCount, shuffledList.Count);
+
         remainingActiveCount = countToActivate;
 
         List<string> currentDayTaskDescriptions = new List<string>();
@@ -125,14 +173,17 @@ public class InteractableRandomChance : MonoBehaviour
         {
             shuffledList[i].SetInteractableState(true);
 
-            // Objenin içindeki ScriptableObject verisinden görev metnini alıyoruz
             if (shuffledList[i].Data != null)
             {
                 currentDayTaskDescriptions.Add(shuffledList[i].Data.taskDescription);
+
+                if (shuffledList[i].Data.isNoiseMaker)
+                {
+                    activeNoiseMakersCount++;
+                }
             }
         }
 
-        // UI yöneticisine görev listesini gönderiyoruz
         if (TaskUIManager.Instance != null)
         {
             TaskUIManager.Instance.PopulateTasks(currentDayTaskDescriptions);
@@ -142,14 +193,26 @@ public class InteractableRandomChance : MonoBehaviour
         isTimerRunning = true;
     }
 
-    public void NotifyObjectResolved(string taskDescription)
+    // Gün atlatma fonksiyonu (DayManager burayı çağıracak)
+    public void AdvanceToNextDay()
+    {
+        currentDay++;
+        StartNewDay();
+    }
+
+    public void NotifyObjectResolved(string taskDescription, InteractableData resolvedData)
     {
         if (isEarthquakeActive || !isTimerRunning) return;
 
         remainingActiveCount--;
         Debug.Log("Kalan aktif nesne: " + remainingActiveCount);
 
-        // UI'daki görevin üzerini çizdiriyoruz
+        if (resolvedData != null && resolvedData.isNoiseMaker)
+        {
+            activeNoiseMakersCount = Mathf.Max(0, activeNoiseMakersCount - 1);
+            Debug.Log("Gürültülü eşya kapatıldı! Stres artış hızı yavaşlatıldı.");
+        }
+
         if (TaskUIManager.Instance != null)
         {
             TaskUIManager.Instance.CompleteTask(taskDescription);
@@ -164,15 +227,31 @@ public class InteractableRandomChance : MonoBehaviour
     private void TriggerSurvivalPhase()
     {
         isDayCompletedSuccessfully = true;
-        Debug.Log("Bütün objeler zamanında tamamlandı: SAKLAN VE KURTUL!");
+        Debug.Log("Bütün objeler zamanında tamamlandı: SAKLAN VE KURTUL! (Stres artmaya devam ediyor)");
 
         if (survivalMessageUI != null)
             survivalMessageUI.SetActive(true);
     }
 
+    private IEnumerator StressOverloadDeathRoutine()
+    {
+        isEarthquakeActive = true;
+
+        if (timerText != null)
+        {
+            timerText.text = "PANIC OVERLOAD!";
+        }
+
+        Debug.Log(">>> ÖLÜM: Stres seviyesi tavan yaptı!");
+        yield return new WaitForSeconds(1.5f);
+
+        PlayerDeath();
+    }
+
     private IEnumerator TriggerEarthquakeRoutine()
     {
         isEarthquakeActive = true;
+        isStressActive = false;
 
         if (timerText != null)
         {
@@ -214,6 +293,6 @@ public class InteractableRandomChance : MonoBehaviour
 
     private void PlayerDeath()
     {
-        Debug.Log(">>> ÖLÜM: Karakter depremde eşyaları yetiştiremediği için öldü!");
+        Debug.Log(">>> GAME OVER: Ölüm ekranı açılıyor.");
     }
 }

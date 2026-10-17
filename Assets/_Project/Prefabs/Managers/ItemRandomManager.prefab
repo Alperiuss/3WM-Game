@@ -60,9 +60,14 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   baseActiveCount: 3
-  dayTimeLimit: 45
+  dayTimeLimit: 25
   earthquakeDuration: 5
   baseEarthquakeMagnitude: 0.1
   magnitudeMultiplierPerDay: 0.08
+  currentDay: 1
+  stressSlider: {fileID: 0}
+  maxStress: 160
+  baseStressFillRate: 2
+  noiseMakerPenaltyRate: 1.5
   survivalMessageUI: {fileID: 0}
   timerText: {fileID: 0}

@@ -11,7 +11,10 @@ public class TaskUIManager : MonoBehaviour
     [SerializeField] private GameObject taskItemPrefab;
     [SerializeField] private Transform taskContainer;
 
+    // Görev UI nesneleri ve sayı takipleri için sözlükler
     private Dictionary<string, GameObject> activeTaskUIElements = new Dictionary<string, GameObject>();
+    private Dictionary<string, int> taskTotalCounts = new Dictionary<string, int>();
+    private Dictionary<string, int> taskCurrentCounts = new Dictionary<string, int>();
 
     private void Awake()
     {
@@ -21,47 +24,86 @@ public class TaskUIManager : MonoBehaviour
             Destroy(gameObject);
     }
 
-    // Yeni gün başladığında aktif görevleri ekrana basar
+    // Yeni gün başladığında aktif görevleri sayarak ekrana basar
     public void PopulateTasks(List<string> taskDescriptions)
     {
-        // Önce eski görevleri temizle
         ClearTasks();
 
+        // Aynı açıklamaya sahip görevleri kendi içinde sayıyoruz (Örn: "{Stress Item}" kaç adet var?)
+        Dictionary<string, int> counts = new Dictionary<string, int>();
         foreach (var desc in taskDescriptions)
         {
+            if (counts.ContainsKey(desc))
+                counts[desc]++;
+            else
+                counts[desc] = 1;
+        }
+
+        // Benzersiz görevleri ekrana tek bir satır olarak basıyoruz
+        foreach (var pair in counts)
+        {
+            string desc = pair.Key;
+            int totalCount = pair.Value;
+
+            taskTotalCounts[desc] = totalCount;
+            taskCurrentCounts[desc] = 0;
+
             GameObject taskObj = Instantiate(taskItemPrefab, taskContainer);
             TextMeshProUGUI textComp = taskObj.GetComponentInChildren<TextMeshProUGUI>();
 
             if (textComp != null)
             {
-                textComp.text = "- " + desc;
+                // Eğer birden fazlaysa yanına sayaç koyuyoruz (Örn: "- {Stress Item} (0/2)")
+                if (totalCount > 1)
+                {
+                    textComp.text = $"- {desc} (0/{totalCount})";
+                }
+                else
+                {
+                    textComp.text = $"- {desc}";
+                }
             }
 
-            // Sözlükte saklayalım ki görev tamamlandığında bulup silebilelim veya güncelleyebilelim
-            if (!activeTaskUIElements.ContainsKey(desc))
-            {
-                activeTaskUIElements.Add(desc, taskObj);
-            }
+            activeTaskUIElements.Add(desc, taskObj);
         }
     }
 
-    // Bir görev tamamlandığında (çözüldüğünde) çağrılır
+    // Bir görev çözüldüğünde çağrılır
     public void CompleteTask(string taskDescription)
     {
         if (activeTaskUIElements.ContainsKey(taskDescription))
         {
+            // Tamamlanan sayısını 1 artırıyoruz
+            taskCurrentCounts[taskDescription]++;
+            int total = taskTotalCounts[taskDescription];
+            int current = taskCurrentCounts[taskDescription];
+
             GameObject taskObj = activeTaskUIElements[taskDescription];
             TextMeshProUGUI textComp = taskObj.GetComponentInChildren<TextMeshProUGUI>();
 
             if (textComp != null)
             {
-                // Görevin üzerini çizme efekti (TextMeshPro zengin metin desteği)
-                textComp.text = "<s>- " + taskDescription + "</s>";
-                textComp.color = Color.gray; // Soluk renk
+                if (total > 1)
+                {
+                    // Eğer hepsi bitmediyse sadece sayacı güncelliyoruz (Örn: 1/2)
+                    if (current < total)
+                    {
+                        textComp.text = $"- {taskDescription} ({current}/{total})";
+                    }
+                    else
+                    {
+                        // Hepsi bittiyse (Örn: 2/2) üstünü çizip rengini soluklaştırıyoruz
+                        textComp.text = $"<s>- {taskDescription} ({current}/{total})</s>";
+                        textComp.color = Color.gray;
+                    }
+                }
+                else
+                {
+                    // Tekli görevse direkt üstünü çiziyoruz
+                    textComp.text = $"<s>- {taskDescription}</s>";
+                    textComp.color = Color.gray;
+                }
             }
-
-            // İstersen kısa bir süre sonra listeden tamamen silebilirsin
-            // Destroy(taskObj, 1.5f);
         }
     }
 
@@ -76,5 +118,7 @@ public class TaskUIManager : MonoBehaviour
             }
         }
         activeTaskUIElements.Clear();
+        taskTotalCounts.Clear();
+        taskCurrentCounts.Clear();
     }
 }

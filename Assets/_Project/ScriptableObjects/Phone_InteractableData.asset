@@ -16,4 +16,5 @@ MonoBehaviour:
   taskDescription: '{Stress Item}'
   requiresItem: 0
   requiredItemName: 
+  isNoiseMaker: 1
   interactionSound: {fileID: 0}

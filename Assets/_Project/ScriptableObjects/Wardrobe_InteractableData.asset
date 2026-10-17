@@ -12,8 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a21d7619df3777643960fe57bc52461e, type: 3}
   m_Name: Wardrobe_InteractableData
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
-  objectName: Chemicals
+  objectName: Wardrobe
   taskDescription: Secure the wardrobe
   requiresItem: 0
   requiredItemName: 
+  isNoiseMaker: 0
   interactionSound: {fileID: 0}
