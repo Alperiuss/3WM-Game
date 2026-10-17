@@ -2017,6 +2017,10 @@ PrefabInstance:
       value: 25
       objectReference: {fileID: 0}
     - target: {fileID: 2863919433448555534, guid: 10b8fcfa5a7d8e64da5a75ac32515129, type: 3}
+      propertyPath: baseActiveCount
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2863919433448555534, guid: 10b8fcfa5a7d8e64da5a75ac32515129, type: 3}
       propertyPath: survivalMessageUI
       value: 
       objectReference: {fileID: 667275667}
