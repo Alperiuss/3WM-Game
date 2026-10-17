@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Electricity_InteractableData 1
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
   objectName: Electricity
-  interactionPromt: Press [E] to close
+  interactionPromt: Hold [E] to close
   interactionSound: {fileID: 0}

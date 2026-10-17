@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Tap_InteractableData
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
   objectName: Tap
-  interactionPromt: Press [E] to close
+  interactionPromt: Hold [E] to close
   interactionSound: {fileID: 0}
