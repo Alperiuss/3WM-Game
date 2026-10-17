@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Fridge_InteractableData
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
   objectName: Fridge
-  interactionPromt: Hold [E] to close
+  taskDescription: Secure the refrigerator
   interactionSound: {fileID: 0}
