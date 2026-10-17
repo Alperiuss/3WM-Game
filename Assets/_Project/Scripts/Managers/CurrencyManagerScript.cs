@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections; // Coroutine için gerekli
 using TMPro;
 
 public class CurrencyManager : MonoBehaviour
@@ -12,6 +13,13 @@ public class CurrencyManager : MonoBehaviour
     [SerializeField] private TMP_Text fameText;
     [SerializeField] private GameObject shopPanel;   // Kapanacak Mağaza Paneli
 
+    [Header("Warning Hierarchy References")]
+    [SerializeField] private GameObject warningPanel;      // En üstteki panel
+    [SerializeField] private GameObject warningImage;      // Panel içindeki görsel/arka plan
+    [SerializeField] private TMP_Text warningText;          // Yazı (TextMeshPro)
+    [SerializeField] private float warningDuration = 2f;    // Ekranda kalma süresi
+
+    private Coroutine warningCoroutine;
     private const string FAME_KEY = "Player_Fame";
 
     private void Awake()
@@ -23,6 +31,7 @@ public class CurrencyManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
         }
 
         LoadFame();
@@ -32,6 +41,8 @@ public class CurrencyManager : MonoBehaviour
     {
         UpdateUI();
 
+        // Oyun başladığında uyarı hiyerarşisini tamamen gizle
+        SetWarningActive(false);
     }
 
     // --- CURRENCY METOTLARI ---
@@ -52,7 +63,48 @@ public class CurrencyManager : MonoBehaviour
             UpdateUI();
             return true;
         }
-        return false;
+        else
+        {
+            // Para yetmediğinde hiyerarşiyi sırayla açıp uyarıyı göster
+            ShowWarning();
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Uyarı hiyerarşisini açar ve belirlenen süre sonra kapatır.
+    /// </summary>
+    public void ShowWarning()
+    {
+        if (warningCoroutine != null)
+        {
+            StopCoroutine(warningCoroutine);
+        }
+
+        warningCoroutine = StartCoroutine(WarningRoutine());
+    }
+
+    private IEnumerator WarningRoutine()
+    {
+        // Panel, Image ve Text'i aktif et
+        SetWarningActive(true);
+
+        // Belirlenen süre kadar ekranda tut
+        yield return new WaitForSeconds(warningDuration);
+
+        // Süre dolunca tekrar kapat
+        SetWarningActive(false);
+        warningCoroutine = null;
+    }
+
+    /// <summary>
+    /// Hiyerarşideki tüm parçaları güvenli şekilde açar veya kapatır.
+    /// </summary>
+    private void SetWarningActive(bool isActive)
+    {
+        if (warningPanel != null) warningPanel.SetActive(isActive);
+        if (warningImage != null) warningImage.SetActive(isActive);
+        if (warningText != null) warningText.gameObject.SetActive(isActive);
     }
 
     private void SaveFame()
@@ -78,7 +130,6 @@ public class CurrencyManager : MonoBehaviour
 
     public void OnContinuePressed()
     {
-        // 1. Mağaza panelini kapat
         if (shopPanel != null)
         {
             shopPanel.SetActive(false);
