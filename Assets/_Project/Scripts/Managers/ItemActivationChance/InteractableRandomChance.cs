@@ -29,6 +29,7 @@ public class InteractableRandomChance : MonoBehaviour
     private int remainingActiveCount = 0;
     private bool isEarthquakeActive = false;
     private bool isDayCompletedSuccessfully = false;
+    public int CurrentDay => currentDay;
 
     private void Awake()
     {

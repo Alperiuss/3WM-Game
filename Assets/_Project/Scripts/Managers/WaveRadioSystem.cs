@@ -28,6 +28,7 @@ public class WaveRadioSystem : MonoBehaviour
     [SerializeField] private TMP_Text radioText;
 
     private Coroutine currentRadioCoroutine;
+    private bool submitActionPressed = false; // Enter tuşuna basıldığını takip eden bayrak
 
     private void Awake()
     {
@@ -43,7 +44,6 @@ public class WaveRadioSystem : MonoBehaviour
         }
 
         // Oyun ilk açıldığında otomatik olarak 1. Gün / 1. Wave radyosunu tetikleyelim:
-        // (DayManager zaten radyo kamerasını açtığı için burada direkt başlatıyoruz)
         OnWaveCompleted(1);
     }
 
@@ -55,6 +55,15 @@ public class WaveRadioSystem : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha3)) OnWaveCompleted(3);
         if (Input.GetKeyDown(KeyCode.Alpha4)) OnWaveCompleted(4);
         if (Input.GetKeyDown(KeyCode.Alpha5)) OnWaveCompleted(5);
+
+        // Radyo paneli açıkken Enter tuşuna basıldığında tetiklenir
+        if (radioPanel != null && radioPanel.activeSelf)
+        {
+            if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.KeypadEnter))
+            {
+                submitActionPressed = true;
+            }
+        }
     }
 
     // BÖLÜM BİTTİĞİNDE ÇAĞRILACAK METOT
@@ -69,7 +78,6 @@ public class WaveRadioSystem : MonoBehaviour
         else
         {
             Debug.LogWarning($"[RadioSystem] Bölüm {waveIndex} için radyo mesajı bulunamadı! Doğrudan geçiliyor.");
-            // Eğer o gün için radyo mesajı yoksa sistemi tıkamamak adına direkt bitişi tetikleyebiliriz:
             if (DayManager.Instance != null)
             {
                 DayManager.Instance.OnRadioFinished();
@@ -94,23 +102,46 @@ public class WaveRadioSystem : MonoBehaviour
         foreach (string message in broadcast.messages)
         {
             radioText.text = "";
+            submitActionPressed = false; // Her yeni cümlede tuş hafızasını sıfırla
 
-            // O wave'e özel daktilo hızı (Zaman durdurulduğu için WaitForSecondsRealtime kullanıyoruz)
+            // 1. Aşama: Harf harf daktilo yazma efekti
             foreach (char letter in message.ToCharArray())
             {
+                // Eğer yazı yazılırken Enter'a basıldıysa, yazının tamamını anında göster ve döngüden çık
+                if (submitActionPressed)
+                {
+                    radioText.text = message;
+                    submitActionPressed = false;
+                    break;
+                }
+
                 radioText.text += letter;
                 yield return new WaitForSecondsRealtime(broadcast.typingSpeed);
             }
 
-            // O wave'e özel bekleme süresi
-            yield return new WaitForSecondsRealtime(broadcast.displayDuration);
+            submitActionPressed = false;
+
+            // 2. Aşama: Cümlenin ekranda kalma/bekleme süresi
+            float waitTimer = broadcast.displayDuration;
+            while (waitTimer > 0f)
+            {
+                // Eğer yazı ekranda dururken Enter'a basıldıysa, bekleme süresini atla ve direkt sonraki cümleye geç
+                if (submitActionPressed)
+                {
+                    submitActionPressed = false;
+                    break;
+                }
+
+                waitTimer -= Time.unscaledDeltaTime;
+                yield return null;
+            }
         }
 
         radioText.text = "";
         radioPanel.SetActive(false);
         currentRadioCoroutine = null;
 
-        // ⭐ RADYO BİTTİ! DayManager'daki WaitUntil kilidini açmak için haberdar ediyoruz:
+        // RADYO BİTTİ! DayManager'daki WaitUntil kilidini açıyoruz:
         if (DayManager.Instance != null)
         {
             DayManager.Instance.OnRadioFinished();

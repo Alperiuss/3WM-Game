@@ -54,6 +54,17 @@ public class DayManager : MonoBehaviour
 
         Time.timeScale = 1f;
 
+        int currentDay = 1;
+        if (InteractableRandomChance.Instance != null)
+        {
+            currentDay = InteractableRandomChance.Instance.CurrentDay;
+        }
+
+        if (WaveRadioSystem.Instance != null)
+        {
+            WaveRadioSystem.Instance.OnWaveCompleted(currentDay);
+        }
+
         // Radyo sahnesinin süresi (Örn: Oyuncu radyoyu inceleyene kadar 3 saniye bekle veya tuşa basmasını sağla)
         isRadioFinished = false;
         yield return new WaitUntil(() => isRadioFinished);
@@ -136,11 +147,7 @@ public class DayManager : MonoBehaviour
 
         Time.timeScale = 1f; // Oyunu tekrar başlat
 
-        // Sonraki günü / yeni turu başlat
-        if (InteractableRandomChance.Instance != null)
-        {
-            InteractableRandomChance.Instance.StartNewDay();
-        }
+        StartCoroutine(GameSequenceRoutine()); // Yeni günü başlat
     }
 
     // Yardımcı Metot: İmlecin görünürlüğünü ve kilitlenme durumunu yönetir
