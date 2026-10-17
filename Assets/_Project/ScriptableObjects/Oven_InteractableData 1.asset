@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Oven_InteractableData 1
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
   objectName: Oven
-  interactionPromt: Press [E] to close
+  interactionPromt: Hold [E] to close
   interactionSound: {fileID: 0}

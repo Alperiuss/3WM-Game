@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem; // Yeni Input System kütüphanesi
+using UnityEngine.UI; // UI için gerekli
 
 public class PlayerRaycast : MonoBehaviour
 {
@@ -9,6 +10,7 @@ public class PlayerRaycast : MonoBehaviour
 
     [Header("UI Settings")]
     [SerializeField] private GameObject interactionPromptUI;
+    [SerializeField] private Image progressRingImage; // İlerleme halkası için UI Image referansı
 
     [Header("Input Action")]
     [SerializeField] private InputActionReference interactActionReference; // Input Action referansı
@@ -70,7 +72,6 @@ public class PlayerRaycast : MonoBehaviour
             if (interactActionReference != null && interactActionReference.action.IsPressed())
             {
                 currentHoldTime += Time.deltaTime;
-                Debug.Log("Basılı tutuluyor... Süre: " + currentHoldTime.ToString("F1") + " / " + currentTarget.RequiredHoldTime);
 
                 // Süre dolduysa etkileşimi gerçekleştir
                 if (currentHoldTime >= currentTarget.RequiredHoldTime)
@@ -89,6 +90,21 @@ public class PlayerRaycast : MonoBehaviour
         else
         {
             currentHoldTime = 0f;
+        }
+
+        // Halkanın doluluk oranını ve görünürlüğünü yönet
+        if (progressRingImage != null)
+        {
+            if (currentTarget != null && currentTarget.RequiredHoldTime > 0f)
+            {
+                progressRingImage.gameObject.SetActive(true);
+                progressRingImage.fillAmount = currentHoldTime / currentTarget.RequiredHoldTime;
+            }
+            else
+            {
+                progressRingImage.gameObject.SetActive(false);
+                progressRingImage.fillAmount = 0f;
+            }
         }
 
         if (interactionPromptUI != null)
