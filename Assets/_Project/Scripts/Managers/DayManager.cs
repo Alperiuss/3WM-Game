@@ -16,6 +16,10 @@ public class DayManager : MonoBehaviour
     [SerializeField] private GameObject summaryPanel;
     [SerializeField] private GameObject marketPanel;
 
+    [Header("Player Spawn & Movement")]
+    [SerializeField] private Transform playerSpawnPoint;     // Karakterin her gün başlayacağı nokta
+    [SerializeField] private MonoBehaviour playerMovementScript; // Karakterin hareket scripti (örn: FirstPersonController)
+
     private bool isRadioFinished = false;
     private bool isFirstGameLaunch = true;
 
@@ -53,11 +57,15 @@ public class DayManager : MonoBehaviour
         if (summaryPanel != null) summaryPanel.SetActive(false);
         if (marketPanel != null) marketPanel.SetActive(false);
 
+        // Radyo aşamasında hareket kesinlikle kapalı olmalı!
+        SetPlayerMovement(false);
         SetCursorState(false);
     }
 
     private IEnumerator GameSequenceRoutine(bool isStartingGame = false)
     {
+        SetPlayerMovement(false);
+
         ScreenFader.Instance.FadeTransition(
             onHalfWay: () =>
             {
@@ -99,6 +107,9 @@ public class DayManager : MonoBehaviour
                     CanvasGroup group = playerCanvas.GetComponent<CanvasGroup>();
                     if (group != null) group.alpha = 0f; // Ekran açılırken görünmez başlar
                 }
+
+                // KARAKTERİ HER GÜN AYNI YERE IŞINLA (Spawn Point)
+                ResetPlayerPosition();
             },
             onComplete: () =>
             {
@@ -106,6 +117,9 @@ public class DayManager : MonoBehaviour
 
                 // Ekran açıldıktan sonra Player Canvas'ı yumuşak bir fade-in ile açıyoruz
                 StartCoroutine(FadeInPlayerCanvasRoutine());
+
+                // Kilitleri aç ve karakterin hareket etmesine izin ver!
+                SetPlayerMovement(true);
 
                 if (InteractableRandomChance.Instance != null)
                 {
@@ -121,6 +135,35 @@ public class DayManager : MonoBehaviour
                 }
             }
         );
+    }
+
+    // Karakterin pozisyonunu ve rotasyonunu Spawn Point'e sabitleyen güvenli metot
+    private void ResetPlayerPosition()
+    {
+        if (playerSpawnPoint == null) return;
+
+        // Sahnedeki player objesini buluyoruz (Etiketi "Player" olmalı veya tag ile bulabiliriz)
+        GameObject playerObj = GameObject.FindWithTag("Player");
+        if (playerObj != null)
+        {
+            // Eğer karakterde CharacterController varsa doğrudan transform değiştirmek hata verebilir, önce kapatalım
+            CharacterController cc = playerObj.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
+
+            playerObj.transform.position = playerSpawnPoint.position;
+            playerObj.transform.rotation = playerSpawnPoint.rotation;
+
+            if (cc != null) cc.enabled = true;
+        }
+    }
+
+    // Karakterin hareketini açıp kapatan yardımcı metot
+    private void SetPlayerMovement(bool canMove)
+    {
+        if (playerMovementScript != null)
+        {
+            playerMovementScript.enabled = canMove;
+        }
     }
 
     // Player Canvas'ın gecikmeli ve yumuşak bir şekilde netleşmesini sağlayan rutin
@@ -156,6 +199,7 @@ public class DayManager : MonoBehaviour
     public void ShowDaySummary()
     {
         Time.timeScale = 0f;
+        SetPlayerMovement(false); // Özet ekranında da hareket kilitlensin
 
         ScreenFader.Instance.FadeTransition(
             onHalfWay: () =>
