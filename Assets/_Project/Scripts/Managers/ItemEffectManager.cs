@@ -1,26 +1,27 @@
 using UnityEngine;
 
-public class ItemEffectManager : MonoBehaviour
+public class ItemEffectsManager : MonoBehaviour
 {
-    public static ItemEffectManager Instance { get; private set; }
+    public static ItemEffectsManager Instance { get; private set; }
 
-    [Header("Tamir & İnşaat Etkileri")]
-    [Tooltip("Hızlı tamir kiti çarpanı. Normal = 1.0, Seviye arttıkça yükselir.")]
+    [Header("Tamir & İnşaat Eşyaları")]
+    [Tooltip("Hızlı Tamir Kiti alındıysa tamir hızı artar (Örn: %50 daha hızlı)")]
     public float repairSpeedMultiplier = 1f;
-    public int electricalTapeCount = 0;   // Elektrik bandı adedi
-    public int screwCount = 0;            // Vida adedi
-    public int houseUpgradeLevel = 0;     // Ev geliştirmesi seviyesi
+    public bool hasQuickRepairKit = false;
+    public bool hasElectricalTape = false; // Elektrik Bandı alındı mı?
+    public bool hasScrew = false;          // Vida alındı mı?
+    public bool hasHouseUpgrade = false;   // Ev Geliştirmesi alındı mı?
 
-    [Header("Hayatta Kalma & Karakter Etkileri")]
-    [Tooltip("Sakinleştirici çarpanı. Normal = 1.0, Panik dolumunu yavaşlatmak için 1'den küçük olur (örn: 0.70).")]
+    [Header("Hayatta Kalma & Karakter Eşyaları")]
+    [Tooltip("Sakinleştirici alındıysa panik dolumu yavaşlar (Örn: 0.70x çarpan)")]
     public float panicRateMultiplier = 1f;
-    public bool hasDisasterBag = false;   // Afet çantası var mı?
-    public bool hasGasAlarm = false;      // Gaz alarmı var mı?
-    public bool hasLocker = false;        // Locker / Dolap var mı?
+    public bool hasSedative = false;       // Sakinleştirici alındı mı?
+    public bool hasDisasterBag = false;    // Afet Çantası alındı mı?
+    public bool hasGasAlarm = false;       // Gaz Alarmı alındı mı?
+    public bool hasLocker = false;         // Locker / Dolap alındı mı?
 
     private void Awake()
     {
-        // Singleton Yapısı: Diğer scriptlerden tek satırda erişebilmek için
         if (Instance == null)
         {
             Instance = this;
@@ -31,77 +32,73 @@ public class ItemEffectManager : MonoBehaviour
             return;
         }
 
-        // Sahne açılır açılmaz PlayerPrefs kayıtlarını oku ve değerleri hesapla
+        // Oyun sahnesi açılır açılmaz tüm eşyaların alınıp alınmadığını kontrol et
         LoadAllItemEffects();
     }
 
     /// <summary>
-    /// ItemCard'ın PlayerPrefs'e kaydettiği tüm verileri okur ve oyun içi değerlere yansıtır.
+    /// PlayerPrefs'ten "Bought_itemID" kayıtlarını okur ve oyun içi etkilere dönüştürür.
     /// </summary>
     public void LoadAllItemEffects()
     {
         // -------------------------------------------------------------
-        // 1. SEVİYELİ (UPGRADABLE) EŞYALAR: "Level_" + itemID
+        // 1. TAMİR & İNŞAAT EŞYALARI
         // -------------------------------------------------------------
+        hasQuickRepairKit = IsBought("quick_repair_kit");
+        hasElectricalTape = IsBought("electrical_tape");
+        hasScrew          = IsBought("screw");
+        hasHouseUpgrade   = IsBought("house_upgrade");
 
-        // Hızlı Tamir Kiti (Her seviye tamir hızını %25 artırır)
-        int repairLevel = PlayerPrefs.GetInt("Level_quick_repair_kit", 0);
-        repairSpeedMultiplier = 1f + (repairLevel * 0.25f);
-
-        // Sakinleştirici (Her seviye panik dolmasını %15 yavaşlatır, min 0.20 sınırı)
-        int sedativeLevel = PlayerPrefs.GetInt("Level_sedative", 0);
-        panicRateMultiplier = Mathf.Clamp(1f - (sedativeLevel * 0.15f), 0.2f, 1f);
-
-        // Ev Geliştirmesi Seviyesi
-        houseUpgradeLevel = PlayerPrefs.GetInt("Level_house_upgrade", 0);
-
-        // Elektrik Bandı & Vida (Eğer seviyeli/adetli satın alınıyorsa)
-        electricalTapeCount = PlayerPrefs.GetInt("Level_electrical_tape", 0);
-        screwCount = PlayerPrefs.GetInt("Level_screw", 0);
+        // Hızlı tamir kiti alındıysa tamir hızını 1.5x (%50 daha hızlı) yap, yoksa normal 1.0x
+        repairSpeedMultiplier = hasQuickRepairKit ? 1.5f : 1.0f;
 
 
         // -------------------------------------------------------------
-        // 2. TEK SEFERLİK (SINGLE PURCHASE) EŞYALAR: "Bought_" + itemID
+        // 2. HAYATTA KALMA & KARAKTER EŞYALARI
         // -------------------------------------------------------------
+        hasSedative    = IsBought("sedative");
+        hasDisasterBag = IsBought("disaster_bag");
+        hasGasAlarm    = IsBought("gas_alarm");
+        hasLocker      = IsBought("locker");
 
-        hasDisasterBag = PlayerPrefs.GetInt("Bought_disaster_bag", 0) == 1;
-        hasGasAlarm = PlayerPrefs.GetInt("Bought_gas_alarm", 0) == 1;
-        hasLocker = PlayerPrefs.GetInt("Bought_locker", 0) == 1;
+        // Sakinleştirici alındıysa panik dolumunu %30 yavaşlat (0.7x), yoksa normal 1.0x
+        panicRateMultiplier = hasSedative ? 0.7f : 1.0f;
 
-        // Eğer elektrik bandı ve vida tek seferlik eşya yapıldıysa:
-        if (PlayerPrefs.GetInt("Bought_electrical_tape", 0) == 1 && electricalTapeCount == 0)
-        {
-            electricalTapeCount = 1;
-        }
-        if (PlayerPrefs.GetInt("Bought_screw", 0) == 1 && screwCount == 0)
-        {
-            screwCount = 1;
-        }
-
-        Debug.Log("[ItemEffectsManager] Eşya etkileri PlayerPrefs'ten başarıyla yüklendi!");
+        Debug.Log("[ItemEffectsManager] Tüm tekil eşyalar başarıyla yüklendi!");
     }
 
-    // =========================================================================
-    // TEST & DEBUG KISAYOLLARI (Inspector'da script başlığına sağ tıklayarak açılır)
-    // =========================================================================
-
-    [ContextMenu("Test: Kayıtları Konsola Yazdır")]
-    private void DebugPrintSavedItems()
+    /// <summary>
+    /// ItemCard'ın kaydettiği "Bought_" anahtarına bakar.
+    /// </summary>
+    private bool IsBought(string itemID)
     {
-        Debug.Log("--- PLAYERPREFS KAYIT DURUMU ---");
-        Debug.Log($"quick_repair_kit Lvl: {PlayerPrefs.GetInt("Level_quick_repair_kit", 0)}");
-        Debug.Log($"sedative Lvl: {PlayerPrefs.GetInt("Level_sedative", 0)}");
-        Debug.Log($"house_upgrade Lvl: {PlayerPrefs.GetInt("Level_house_upgrade", 0)}");
-        Debug.Log($"gas_alarm Alındı mı: {PlayerPrefs.GetInt("Bought_gas_alarm", 0) == 1}");
-        Debug.Log($"locker Alındı mı: {PlayerPrefs.GetInt("Bought_locker", 0) == 1}");
-        Debug.Log($"disaster_bag Alındı mı: {PlayerPrefs.GetInt("Bought_disaster_bag", 0) == 1}");
+        return PlayerPrefs.GetInt("Bought_" + itemID, 0) == 1;
     }
 
-    [ContextMenu("Test: Tüm PlayerPrefs Kayıtlarını Sil")]
-    private void DebugClearPlayerPrefs()
+    // =========================================================================
+    // INSPECTOR SAĞ TIK TEST MENÜSÜ (Game Jam testleri için aşırı pratik)
+    // =========================================================================
+
+    [ContextMenu("Test: Alınan Eşyaları Konsola Yaz")]
+    private void DebugPrintItems()
+    {
+        Debug.Log("==== [SATIN ALINAN EŞYALAR] ====");
+        Debug.Log($"Hızlı Tamir Kiti : {hasQuickRepairKit} (Hız Çarpanı: {repairSpeedMultiplier})");
+        Debug.Log($"Sakinleştirici   : {hasSedative} (Panik Çarpanı: {panicRateMultiplier})");
+        Debug.Log($"Elektrik Bandı   : {hasElectricalTape}");
+        Debug.Log($"Vida             : {hasScrew}");
+        Debug.Log($"Ev Geliştirmesi  : {hasHouseUpgrade}");
+        Debug.Log($"Afet Çantası     : {hasDisasterBag}");
+        Debug.Log($"Gaz Alarmı       : {hasGasAlarm}");
+        Debug.Log($"Locker (Dolap)   : {hasLocker}");
+    }
+
+    [ContextMenu("Test: Tüm Alımları Sıfırla (PlayerPrefs Reset)")]
+    private void DebugResetAllPurchases()
     {
         PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
-        Debug.LogWarning("[ItemEffectsManager] Tüm satın alma kayıtları sıfırlandı!");
+        LoadAllItemEffects();
+        Debug.LogWarning("[ItemEffectsManager] Tüm eşya alımları sıfırlandı!");
     }
 }
