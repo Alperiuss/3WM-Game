@@ -64,7 +64,7 @@ public class InteractableObject : MonoBehaviour
             // Yöneticiye hangi görevin bittiğini bildiriyoruz
             if (InteractableRandomChance.Instance != null)
             {
-                InteractableRandomChance.Instance.NotifyObjectResolved(data.taskDescription);
+                InteractableRandomChance.Instance.NotifyObjectResolved(data.taskDescription, data);
             }
         }
 

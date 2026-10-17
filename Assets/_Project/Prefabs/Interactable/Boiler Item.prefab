@@ -157,7 +157,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 457d5641d58939f4a8bf8ed47db12a60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableObject
-  data: {fileID: 11400000, guid: babda3f2462f10e4d951be369acdeb37, type: 2}
+  data: {fileID: 11400000, guid: 2f5332ece76323e40a8b4ac31f9e1341, type: 2}
   requiredHoldTime: 2
   isInteractable: 1
   targetRenderer: {fileID: 4847646309699084739}

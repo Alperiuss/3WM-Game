@@ -10,5 +10,8 @@ public class InteractableData : ScriptableObject
     public bool requiresItem;            // Eşya gerektiriyor mu? (Örn: Electrical Tape)
     public string requiredItemName;      // Gereken eşyanın adı
 
+    [Header("Stress Mechanics")]
+    public bool isNoiseMaker;
+
     public AudioClip interactionSound;
 }

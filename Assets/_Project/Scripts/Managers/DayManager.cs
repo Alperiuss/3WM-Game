@@ -1,26 +1,26 @@
 using UnityEngine;
 using System.Collections;
-using Unity.Cinemachine; // Unity 6 Cinemachine 3 için
+using Unity.Cinemachine;
 
 public class DayManager : MonoBehaviour
 {
     public static DayManager Instance;
 
     [Header("Cameras")]
-    [SerializeField] private CinemachineCamera radioCamera;   // Radyo kamerası
-    [SerializeField] private CinemachineCamera playerCamera;  // Oyuncu kamerası
+    [SerializeField] private CinemachineCamera radioCamera;
+    [SerializeField] private CinemachineCamera playerCamera;
 
     [Header("UI Canvases")]
-    [SerializeField] private GameObject radioCanvas;          // Radyo Canvas'ı
-    [SerializeField] private GameObject playerCanvas;         // Oyuncu Canvas'ı
-    [SerializeField] private GameObject summaryPanel;         // Görev Özeti ve XP Paneli
-    [SerializeField] private GameObject marketPanel;          // Market Paneli
-    // Radyonun bitip bitmediğini takip eden bayrak (flag)
+    [SerializeField] private GameObject radioCanvas;
+    [SerializeField] private GameObject playerCanvas;
+    [SerializeField] private GameObject summaryPanel;
+    [SerializeField] private GameObject marketPanel;
+
     private bool isRadioFinished = false;
+    private bool isFirstGameLaunch = true;
 
     private void Awake()
     {
-        // Singleton pattern
         if (Instance == null)
         {
             Instance = this;
@@ -34,32 +34,37 @@ public class DayManager : MonoBehaviour
 
     private void Start()
     {
-        // Oyunu bu özel sıralı başlatma fonksiyonu ile başlatıyoruz
-        StartCoroutine(GameSequenceRoutine());
+        SetupRadioCameraInitially();
+        StartCoroutine(GameSequenceRoutine(true));
     }
 
-    private IEnumerator GameSequenceRoutine()
+    private void SetupRadioCameraInitially()
     {
-        SetCursorState(false);
+        if (radioCamera != null) radioCamera.Priority = 20;
+        if (playerCamera != null) playerCamera.Priority = 10;
 
-        // Fade geçişini başlatıyoruz
+        if (radioCanvas != null) radioCanvas.SetActive(true);
+        if (playerCanvas != null)
+        {
+            playerCanvas.SetActive(true);
+            CanvasGroup group = playerCanvas.GetComponent<CanvasGroup>();
+            if (group != null) group.alpha = 0f; // Başlangıçta gizli
+        }
+        if (summaryPanel != null) summaryPanel.SetActive(false);
+        if (marketPanel != null) marketPanel.SetActive(false);
+
+        SetCursorState(false);
+    }
+
+    private IEnumerator GameSequenceRoutine(bool isStartingGame = false)
+    {
         ScreenFader.Instance.FadeTransition(
             onHalfWay: () =>
             {
-                // 1. AŞAMA: Ekran Siyahken (Kameralar ve Canvas'lar arkada ayarlanır)
-                if (radioCamera != null) radioCamera.Priority = 20;
-                if (playerCamera != null) playerCamera.Priority = 10;
-
-                if (radioCanvas != null) radioCanvas.SetActive(true);
-                if (playerCanvas != null) playerCanvas.SetActive(false);
-                if (summaryPanel != null) summaryPanel.SetActive(false);
-                if (marketPanel != null) marketPanel.SetActive(false);
-
                 Time.timeScale = 1f;
             },
             onComplete: () =>
             {
-                // 2. AŞAMA: Ekran Tamamen Açıldıktan SONRA Radyo Güvenle Başlar!
                 int currentDayToPlay = 1;
                 if (InteractableRandomChance.Instance != null)
                 {
@@ -73,96 +78,144 @@ public class DayManager : MonoBehaviour
             }
         );
 
-        // Radyo sahnesinin bitmesini bekle (Enter ile geçilene kadar veya süre bitene kadar kilitli kalır)
         isRadioFinished = false;
         yield return new WaitUntil(() => isRadioFinished);
 
-        // --- RADYODAN OYUNCU KAMERASINA GEÇİŞ ---
-        ScreenFader.Instance.FadeTransition(() =>
-        {
-            SetCursorState(false);
+        // --- RADYODAN OYUNCU KAMERASINA GEÇİŞ (Kamera değişimi kesinlikle siyah ekranda yapılır) ---
+        ScreenFader.Instance.FadeTransition(
+            onHalfWay: () =>
+            {
+                SetCursorState(false);
 
-            if (radioCamera != null) radioCamera.Priority = 10;
-            if (playerCamera != null) playerCamera.Priority = 20;
+                // Ekran tamamen siyahken kamera ve aktif canvas ayarlanır (Zıplama önlenir)
+                if (radioCamera != null) radioCamera.Priority = 10;
+                if (playerCamera != null) playerCamera.Priority = 20;
 
-            if (radioCanvas != null) radioCanvas.SetActive(false);
-            if (playerCanvas != null) playerCanvas.SetActive(true);
-        });
+                if (radioCanvas != null) radioCanvas.SetActive(false);
 
-        yield return new WaitForSecondsRealtime(1.0f);
-        Time.timeScale = 1f;
+                if (playerCanvas != null)
+                {
+                    playerCanvas.SetActive(true);
+                    CanvasGroup group = playerCanvas.GetComponent<CanvasGroup>();
+                    if (group != null) group.alpha = 0f; // Ekran açılırken görünmez başlar
+                }
+            },
+            onComplete: () =>
+            {
+                Time.timeScale = 1f;
 
-        if (InteractableRandomChance.Instance != null)
-        {
-            InteractableRandomChance.Instance.StartNewDay();
-        }
+                // Ekran açıldıktan sonra Player Canvas'ı yumuşak bir fade-in ile açıyoruz
+                StartCoroutine(FadeInPlayerCanvasRoutine());
+
+                if (InteractableRandomChance.Instance != null)
+                {
+                    if (isStartingGame && isFirstGameLaunch)
+                    {
+                        InteractableRandomChance.Instance.StartNewDay();
+                        isFirstGameLaunch = false;
+                    }
+                    else if (!isStartingGame)
+                    {
+                        InteractableRandomChance.Instance.StartNewDay();
+                    }
+                }
+            }
+        );
     }
 
-    // Radyo bittiğinde çağrılır
+    // Player Canvas'ın gecikmeli ve yumuşak bir şekilde netleşmesini sağlayan rutin
+    private IEnumerator FadeInPlayerCanvasRoutine()
+    {
+        if (playerCanvas == null) yield break;
+
+        CanvasGroup group = playerCanvas.GetComponent<CanvasGroup>();
+        if (group == null) yield break;
+
+        // Ekran açılışının oturması için çok kısa bir gecikme (örneğin 0.3 saniye)
+        yield return new WaitForSeconds(0.3f);
+
+        float duration = 0.6f; // Netleşme süresi
+        float elapsed = 0f;
+        group.alpha = 0f;
+
+        while (elapsed < duration)
+        {
+            elapsed += Time.deltaTime;
+            group.alpha = Mathf.Lerp(0f, 1f, elapsed / duration);
+            yield return null;
+        }
+
+        group.alpha = 1f;
+    }
+
     public void OnRadioFinished()
     {
         isRadioFinished = true;
     }
 
-    // ==========================================
-    // DEPREM BİTTİĞİNDE ÇAĞRILACAK AKIŞ (Özet -> Market -> Yeni Gün)
-    // ==========================================
-
     public void ShowDaySummary()
     {
-        Time.timeScale = 0f; // Oyunu durdur
+        Time.timeScale = 0f;
 
-        ScreenFader.Instance.FadeTransition(() =>
-         {
-             if (playerCanvas != null) playerCanvas.SetActive(false); // Oyun durunca player UI gizlensin
+        ScreenFader.Instance.FadeTransition(
+            onHalfWay: () =>
+            {
+                if (playerCanvas != null)
+                {
+                    CanvasGroup group = playerCanvas.GetComponent<CanvasGroup>();
+                    if (group != null) group.alpha = 0f;
+                    playerCanvas.SetActive(false);
+                }
 
-             if (summaryPanel != null)
-             {
-                 summaryPanel.SetActive(true); // Görev özeti ve XP panelini göster
-             }
+                if (summaryPanel != null)
+                {
+                    summaryPanel.SetActive(true);
+                }
 
-             SetCursorState(true); // Fareyi göster
-         });
+                SetCursorState(true);
+            }
+        );
     }
 
-    // Özet panelindeki "Continue" butonuna bu bağlanacak
     public void OnSummaryContinuePressed()
     {
-        ScreenFader.Instance.FadeTransition(() =>
-        {
-            if (summaryPanel != null) summaryPanel.SetActive(false); // Özet panelini kapat
-            if (marketPanel != null) marketPanel.SetActive(true);    // Market panelini aç
+        ScreenFader.Instance.FadeTransition(
+            onHalfWay: () =>
+            {
+                if (summaryPanel != null) summaryPanel.SetActive(false);
+                if (marketPanel != null) marketPanel.SetActive(true);
 
-            SetCursorState(true); // Fareyi göster
-        });
+                SetCursorState(true);
+            }
+        );
     }
 
-    // Market panelindeki "Güne Başla / Devam Et" butonuna bu fonksiyonu bağlayacaksın
     public void OnMarketContinuePressed()
     {
-        ScreenFader.Instance.FadeTransition(() =>
-         {
-             if (marketPanel != null) marketPanel.SetActive(false); // Market panelini kapat
-             if (radioCanvas != null) radioCanvas.SetActive(true); // Oyuncu UI'ını aç
-         });
+        SetupRadioCameraInitially();
 
-        Time.timeScale = 1f; // Oyunu tekrar başlat
+        if (marketPanel != null) marketPanel.SetActive(false);
 
-        StartCoroutine(GameSequenceRoutine()); // Yeni günü başlat
+        if (InteractableRandomChance.Instance != null)
+        {
+            InteractableRandomChance.Instance.AdvanceToNextDay();
+        }
+
+        Time.timeScale = 1f;
+        StartCoroutine(GameSequenceRoutine(false));
     }
 
-    // Yardımcı Metot: İmlecin görünürlüğünü ve kilitlenme durumunu yönetir
     private void SetCursorState(bool isVisible)
     {
         if (isVisible)
         {
             Cursor.visible = true;
-            Cursor.lockState = CursorLockMode.None; // İmleç serbestçe hareket eder
+            Cursor.lockState = CursorLockMode.None;
         }
         else
         {
             Cursor.visible = false;
-            Cursor.lockState = CursorLockMode.Locked; // İmleç ekranın ortasında kilitlenir/gizlenir
+            Cursor.lockState = CursorLockMode.Locked;
         }
     }
 }

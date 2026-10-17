@@ -13,7 +13,8 @@ MonoBehaviour:
   m_Name: Chemiclas_InteractableData
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
   objectName: Chemicals
-  taskDescription: Store away hazardous chemicals (Bathroom)
+  taskDescription: Store away hazardous chemicals
   requiresItem: 0
   requiredItemName: 
+  isNoiseMaker: 0
   interactionSound: {fileID: 0}
