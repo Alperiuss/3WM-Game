@@ -40,6 +40,8 @@ public class DayManager : MonoBehaviour
 
     private IEnumerator GameSequenceRoutine()
     {
+        SetCursorState(false);
+
         // 1. Adım: Radyo kamerası önde
         if (radioCamera != null) radioCamera.Priority = 20;
         if (playerCamera != null) playerCamera.Priority = 10;
@@ -55,6 +57,8 @@ public class DayManager : MonoBehaviour
         // Radyo sahnesinin süresi (Örn: Oyuncu radyoyu inceleyene kadar 3 saniye bekle veya tuşa basmasını sağla)
         isRadioFinished = false;
         yield return new WaitUntil(() => isRadioFinished);
+
+        SetCursorState(false);
 
         // 2. Player kamerasını öne al
         if (radioCamera != null) radioCamera.Priority = 10;
@@ -99,6 +103,8 @@ public class DayManager : MonoBehaviour
         {
             summaryPanel.SetActive(true); // Görev özeti ve XP panelini göster
         }
+
+        SetCursorState(true); // Fareyi göster
     }
 
     // Özet panelindeki "Continue" butonuna bu bağlanacak
@@ -114,6 +120,8 @@ public class DayManager : MonoBehaviour
         {
             marketPanel.SetActive(true); // Marketi aç
         }
+
+        SetCursorState(true); // Fareyi göster
     }
 
     // Market panelindeki "Güne Başla / Devam Et" butonuna bu fonksiyonu bağlayacaksın
@@ -132,6 +140,21 @@ public class DayManager : MonoBehaviour
         if (InteractableRandomChance.Instance != null)
         {
             InteractableRandomChance.Instance.StartNewDay();
+        }
+    }
+
+    // Yardımcı Metot: İmlecin görünürlüğünü ve kilitlenme durumunu yönetir
+    private void SetCursorState(bool isVisible)
+    {
+        if (isVisible)
+        {
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None; // İmleç serbestçe hareket eder
+        }
+        else
+        {
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked; // İmleç ekranın ortasında kilitlenir/gizlenir
         }
     }
 }
