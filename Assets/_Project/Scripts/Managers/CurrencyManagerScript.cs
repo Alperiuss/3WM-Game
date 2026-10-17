@@ -1,5 +1,4 @@
 using UnityEngine;
-using UnityEngine.UI;
 using TMPro;
 
 public class CurrencyManager : MonoBehaviour
@@ -12,7 +11,6 @@ public class CurrencyManager : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private TMP_Text fameText;
     [SerializeField] private GameObject shopPanel;   // Kapanacak Mağaza Paneli
-    [SerializeField] private Button continueButton; // Continue Butonu
 
     private const string FAME_KEY = "Player_Fame";
 
@@ -34,11 +32,6 @@ public class CurrencyManager : MonoBehaviour
     {
         UpdateUI();
 
-        // Continue butonuna tıklama dinleyicisini bağla
-        if (continueButton != null)
-        {
-            continueButton.onClick.AddListener(OnContinuePressed);
-        }
     }
 
     // --- CURRENCY METOTLARI ---
@@ -89,16 +82,6 @@ public class CurrencyManager : MonoBehaviour
         if (shopPanel != null)
         {
             shopPanel.SetActive(false);
-        }
-
-        // 2. GameManager'a haber ver (GameManager aktif wave'in radyo anonsunu başlatacak)
-        if (GameManager.Instance != null)
-        {
-            GameManager.Instance.OnShopCompleted();
-        }
-        else
-        {
-            Debug.LogWarning("[CurrencyManager]: GameManager sahnede bulunamadi!");
         }
     }
 }
