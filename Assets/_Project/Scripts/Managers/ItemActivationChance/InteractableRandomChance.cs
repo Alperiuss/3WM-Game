@@ -28,6 +28,7 @@ public class InteractableRandomChance : MonoBehaviour
 
     private int remainingActiveCount = 0;
     private bool isEarthquakeActive = false;
+    private bool isRoundCompletedSuccessfully = false; // Oyuncu tüm item'ları zamanında topladı mı?
 
     private void Awake()
     {
@@ -51,7 +52,7 @@ public class InteractableRandomChance : MonoBehaviour
 
     private void Update()
     {
-        // Zamanlayıcı aktifse geriye doğru say (Bu sayaç deprem gelene kadarki süredir)
+        // Zamanlayıcı aktifse geriye doğru say
         if (isTimerRunning)
         {
             if (currentTimer > 0f)
@@ -65,7 +66,7 @@ public class InteractableRandomChance : MonoBehaviour
                     timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
                 }
 
-                // Süre bittiğinde (00:00 olduğunda) depremi tetikle
+                // Süre bittiğinde (00:00 olduğunda) HER KOŞULDA depremi başlat
                 if (currentTimer <= 0f)
                 {
                     currentTimer = 0f;
@@ -83,6 +84,8 @@ public class InteractableRandomChance : MonoBehaviour
 
         currentRound++; // Her yeni turda tur sayısını artır!
         Debug.Log("--- TUR " + currentRound + " BAŞLADI ---");
+
+        isRoundCompletedSuccessfully = false; // Yeni turda başarı durumunu sıfırla
 
         if (allInteractable == null || allInteractable.Count == 0)
         {
@@ -139,37 +142,33 @@ public class InteractableRandomChance : MonoBehaviour
 
     private void TriggerSurvivalPhase()
     {
-        isTimerRunning = false; // Süreyi durdur
-        Debug.Log("Bütün objeler tamamlandı: SAKLAN VE KURTUL!");
+        isRoundCompletedSuccessfully = true; // Tüm item'lar başarıyla toplandı!
+        Debug.Log("Bütün objeler zamanında tamamlandı: SAKLAN VE KURTUL!");
 
         if (survivalMessageUI != null)
             survivalMessageUI.SetActive(true);
 
         if (timerText != null)
-            timerText.gameObject.SetActive(false); // Süre sayacını gizle
-
-        // İstersen burada başarıyla tamamlandığı için birkaç saniye bekleyip yeni tura geçebilirsin:
-        // Invoke("StartNewRound", 4f);
+            timerText.gameObject.SetActive(false); // Süre sayacını gizle (Zaten bitti veya gizlendi)
     }
 
     private IEnumerator TriggerEarthquakeRoutine()
     {
         isEarthquakeActive = true;
-        Debug.Log("⚠️ SÜRE BİTTİ! DEPREM BAŞLADI! Tur: " + currentRound);
+        Debug.Log("⚠️ SÜRE BİTTİ! DEPREM BAŞLADI!");
 
-        // Deprem başladığında sayaç alanına "DEPREM!" yazabiliriz veya gizleyebiliriz
         if (timerText != null)
         {
+            timerText.gameObject.SetActive(true);
             timerText.text = "DEPREM!";
         }
 
-        // Tur geçtikçe artan formül: Temel şiddet + (Tur Sayısı * Artış Oranı)
+        // Tur geçtikçe artan sarsıntı şiddeti
         float currentMagnitude = baseEarthquakeMagnitude + (currentRound * magnitudeMultiplierPerRound);
-        Debug.Log("Deprem Şiddeti: " + currentMagnitude);
 
+        // 1. Kamerayı belirlenen süre boyunca sallamaya başlatıyoruz
         if (CameraShake.Instance != null)
         {
-            // Kamerayı deprem süresi ve hesaplanan şiddet kadar sars
             yield return StartCoroutine(CameraShake.Instance.Shake(earthquakeDuration, currentMagnitude));
         }
         else
@@ -177,10 +176,38 @@ public class InteractableRandomChance : MonoBehaviour
             yield return new WaitForSeconds(earthquakeDuration);
         }
 
-        Debug.Log("Deprem bitti. Yeni tur başlatılıyor...");
+        // 2. Deprem sallantısı tamamlandı/bitmeye yakın KONTROL yapıyoruz:
+        if (!isRoundCompletedSuccessfully)
+        {
+            // İtem'lar toplanamadıysa depremin sonunda ölüm gerçekleşiyor!
+            if (timerText != null)
+            {
+                timerText.text = "ÖLDÜN!";
+            }
+
+            PlayerDeath();
+
+            // Eğer oyuncu öldüyse yeni tura geçmek istemiyorsan burada 'yield break;' yapabilirsin.
+            // Şimdilik test için yeni turu başlatmaya devam ediyor.
+        }
+        else
+        {
+            Debug.Log(">>> Harika! Süresinde saklandın ve depremi atlattın.");
+        }
+
+        Debug.Log("Deprem bitti. İşlem tamamlanıyor...");
         isEarthquakeActive = false;
 
-        // Deprem bittikten sonra yeni turu başlat
         StartNewRound();
+    }
+
+    // İleride için dolduracağın ölüm fonksiyonu
+    private void PlayerDeath()
+    {
+        Debug.Log(">>> DEBUG: Karakter depremde öldü! (İleride buraya ölüm kodlarını yazabilirsin)");
+
+        // Örnek ileride eklenebilecekler:
+        // Time.timeScale = 0f; // Oyunu dondur
+        // GameOverUI.SetActive(true); // Game Over ekranını aç
     }
 }
