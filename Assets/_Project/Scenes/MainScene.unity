@@ -2725,6 +2725,10 @@ PrefabInstance:
       propertyPath: m_AnchoredPosition.y
       value: -641.6664
       objectReference: {fileID: 0}
+    - target: {fileID: 8995337163104697221, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 9059608256896304649, guid: 2b8420ea4c09cdc40a31ba23ef781bf7, type: 3}
       propertyPath: m_Name
       value: ContinueButton
@@ -3897,6 +3901,18 @@ PrefabInstance:
       propertyPath: shopPanel
       value: 
       objectReference: {fileID: 2125831996}
+    - target: {fileID: 7979577096179051327, guid: 96427d1cb07d5cb4ea3586caadfeddf0, type: 3}
+      propertyPath: warningText
+      value: 
+      objectReference: {fileID: 1585426234}
+    - target: {fileID: 7979577096179051327, guid: 96427d1cb07d5cb4ea3586caadfeddf0, type: 3}
+      propertyPath: warningImage
+      value: 
+      objectReference: {fileID: 1330018882}
+    - target: {fileID: 7979577096179051327, guid: 96427d1cb07d5cb4ea3586caadfeddf0, type: 3}
+      propertyPath: warningPanel
+      value: 
+      objectReference: {fileID: 1708063541}
     - target: {fileID: 9027036903574128902, guid: 96427d1cb07d5cb4ea3586caadfeddf0, type: 3}
       propertyPath: m_Name
       value: CurrencyManager
