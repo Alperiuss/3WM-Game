@@ -4,13 +4,16 @@ public class InteractableObject : MonoBehaviour
 {
     [SerializeField] InteractableData data;
 
+    [Header("Interaction Settings")]
+    [SerializeField] private float requiredHoldTime = 2f; // Etkileşim için gereken süre (saniye)
+
     [Header("Conditions")]
     [SerializeField] private bool isInteractable = false;
 
     [Header("Visual & Color References")]
     [SerializeField] private Renderer targetRenderer;
-    [SerializeField] GameObject activeVisual;
-    [SerializeField] GameObject resolvedVisual;
+    [SerializeField] private GameObject activeVisual;
+    [SerializeField] private GameObject resolvedVisual;
 
     [Header("Color Settings")]
     [SerializeField] private Color normalColor = Color.red;     // Aktifken (Kırmızı)
@@ -20,6 +23,7 @@ public class InteractableObject : MonoBehaviour
     private bool isResolved = false;
 
     public bool IsInteractable => isInteractable && !isResolved;
+    public float RequiredHoldTime => requiredHoldTime;
 
     private void Start()
     {
@@ -57,7 +61,10 @@ public class InteractableObject : MonoBehaviour
         isResolved = true;
         SetObjectColor(interactedColor);
 
-        Debug.Log("Obje ile etkileşime girildi, renk yeşile döndü!");
+        if (data != null)
+        {
+            Debug.Log($"Interacted with {data.objectName}.");
+        }
 
         if (InteractableRandomChance.Instance != null)
             InteractableRandomChance.Instance.NotifyObjectResolved();
