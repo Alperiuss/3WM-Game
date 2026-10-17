@@ -42,8 +42,6 @@ public class InteractableRandomChance : MonoBehaviour
     {
         if (survivalMessageUI != null)
             survivalMessageUI.SetActive(false);
-
-        StartNewDay();
     }
 
     private void Update()
@@ -83,7 +81,7 @@ public class InteractableRandomChance : MonoBehaviour
         if (currentDay > 4)
         {
             Debug.Log("TEBRİKLER! 4 GÜNÜ DE ATLATIP OYUNU KAZANDIN!");
-            if (timerText != null) timerText.text = "ZAFER!";
+            if (timerText != null) timerText.text = "GLORY!";
             return;
         }
 
@@ -118,7 +116,8 @@ public class InteractableRandomChance : MonoBehaviour
         }
 
         // Gün ilerledikçe aktif olacak eşya sayısı artar (1. gün 3, 2. gün 4 vb.)
-        int countToActivate = Mathf.Min(baseActiveCount + 2, shuffledList.Count);
+        int countToActivate = Mathf.Min(baseActiveCount, shuffledList.Count);
+        baseActiveCount += 2;
         remainingActiveCount = countToActivate;
 
         for (int i = 0; i < countToActivate; i++)
@@ -155,12 +154,11 @@ public class InteractableRandomChance : MonoBehaviour
     private IEnumerator TriggerEarthquakeRoutine()
     {
         isEarthquakeActive = true;
-        Debug.Log("⚠️ SÜRE BİTTİ! GÜN " + currentDay + " DEPREMİ BAŞLADI!");
 
         if (timerText != null)
         {
             timerText.gameObject.SetActive(true);
-            timerText.text = "DEPREM!";
+            timerText.text = "EARTHQUAKE!";
         }
 
         // Gün ilerledikçe deprem şiddeti katlanarak artar
@@ -188,12 +186,15 @@ public class InteractableRandomChance : MonoBehaviour
         else
         {
             Debug.Log(">>> Harika! Gün " + currentDay + " başarıyla atlatıldı.");
-            yield return new WaitForSeconds(2f);
             isEarthquakeActive = false;
-            StartNewDay(); // Sonraki güne geç
-        }
+            yield return new WaitForSeconds(1.5f);
 
-        isEarthquakeActive = false;
+            // Doğrudan yeni güne geçmek yerine önce Özet Paneli açılır:
+            if (DayManager.Instance != null)
+            {
+                DayManager.Instance.ShowDaySummary();
+            }
+        }
     }
 
     private void PlayerDeath()

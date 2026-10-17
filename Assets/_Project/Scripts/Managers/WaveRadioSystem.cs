@@ -1,6 +1,6 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using System.Collections.Generic;
+using System.Collections;
 using TMPro;
 
 public class WaveRadioSystem : MonoBehaviour
@@ -10,8 +10,8 @@ public class WaveRadioSystem : MonoBehaviour
     [System.Serializable]
     public class WaveBroadcast
     {
-        public int waveNumber; // Hangi bölüm sonrası çalışacak (Örn: 1, 2, 3...)
-        
+        public int waveNumber; // Hangi gün/bölüm sonrası çalışacak (Örn: 1, 2, 3...)
+
         [Header("Timing Settings (Per Wave)")]
         public float typingSpeed = 0.04f;   // Bu wave'e özel harf yazma hızı
         public float displayDuration = 3.5f; // Bu wave'e özel cümlede bekleme süresi
@@ -41,6 +41,10 @@ public class WaveRadioSystem : MonoBehaviour
         {
             radioPanel.SetActive(false);
         }
+
+        // Oyun ilk açıldığında otomatik olarak 1. Gün / 1. Wave radyosunu tetikleyelim:
+        // (DayManager zaten radyo kamerasını açtığı için burada direkt başlatıyoruz)
+        OnWaveCompleted(1);
     }
 
     private void Update()
@@ -64,7 +68,12 @@ public class WaveRadioSystem : MonoBehaviour
         }
         else
         {
-            Debug.LogWarning($"[RadioSystem] Bölüm {waveIndex} için radyo mesajı bulunamadı!");
+            Debug.LogWarning($"[RadioSystem] Bölüm {waveIndex} için radyo mesajı bulunamadı! Doğrudan geçiliyor.");
+            // Eğer o gün için radyo mesajı yoksa sistemi tıkamamak adına direkt bitişi tetikleyebiliriz:
+            if (DayManager.Instance != null)
+            {
+                DayManager.Instance.OnRadioFinished();
+            }
         }
     }
 
@@ -86,19 +95,25 @@ public class WaveRadioSystem : MonoBehaviour
         {
             radioText.text = "";
 
-            // O wave'e özel daktilo hızı (typingSpeed) kullanılır
+            // O wave'e özel daktilo hızı (Zaman durdurulduğu için WaitForSecondsRealtime kullanıyoruz)
             foreach (char letter in message.ToCharArray())
             {
                 radioText.text += letter;
-                yield return new WaitForSeconds(broadcast.typingSpeed);
+                yield return new WaitForSecondsRealtime(broadcast.typingSpeed);
             }
 
-            // O wave'e özel bekleme süresi (displayDuration) kullanılır
-            yield return new WaitForSeconds(broadcast.displayDuration);
+            // O wave'e özel bekleme süresi
+            yield return new WaitForSecondsRealtime(broadcast.displayDuration);
         }
 
         radioText.text = "";
         radioPanel.SetActive(false);
         currentRadioCoroutine = null;
+
+        // ⭐ RADYO BİTTİ! DayManager'daki WaitUntil kilidini açmak için haberdar ediyoruz:
+        if (DayManager.Instance != null)
+        {
+            DayManager.Instance.OnRadioFinished();
+        }
     }
 }
