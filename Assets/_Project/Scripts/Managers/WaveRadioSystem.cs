@@ -42,9 +42,6 @@ public class WaveRadioSystem : MonoBehaviour
         {
             radioPanel.SetActive(false);
         }
-
-        // Oyun ilk açıldığında otomatik olarak 1. Gün / 1. Wave radyosunu tetikleyelim:
-        OnWaveCompleted(1);
     }
 
     private void Update()
@@ -99,15 +96,17 @@ public class WaveRadioSystem : MonoBehaviour
     {
         radioPanel.SetActive(true);
 
+        // ⭐ EKRAN AÇILIRKEN OYUNCU KAÇIRMASIN DİYE MİNİK BİR GECİKME (Yarım saniye)
+        yield return new WaitForSecondsRealtime(0.5f);
+
         foreach (string message in broadcast.messages)
         {
             radioText.text = "";
-            submitActionPressed = false; // Her yeni cümlede tuş hafızasını sıfırla
+            submitActionPressed = false;
 
             // 1. Aşama: Harf harf daktilo yazma efekti
             foreach (char letter in message.ToCharArray())
             {
-                // Eğer yazı yazılırken Enter'a basıldıysa, yazının tamamını anında göster ve döngüden çık
                 if (submitActionPressed)
                 {
                     radioText.text = message;
@@ -125,7 +124,6 @@ public class WaveRadioSystem : MonoBehaviour
             float waitTimer = broadcast.displayDuration;
             while (waitTimer > 0f)
             {
-                // Eğer yazı ekranda dururken Enter'a basıldıysa, bekleme süresini atla ve direkt sonraki cümleye geç
                 if (submitActionPressed)
                 {
                     submitActionPressed = false;
@@ -141,7 +139,6 @@ public class WaveRadioSystem : MonoBehaviour
         radioPanel.SetActive(false);
         currentRadioCoroutine = null;
 
-        // RADYO BİTTİ! DayManager'daki WaitUntil kilidini açıyoruz:
         if (DayManager.Instance != null)
         {
             DayManager.Instance.OnRadioFinished();

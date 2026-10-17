@@ -42,56 +42,60 @@ public class DayManager : MonoBehaviour
     {
         SetCursorState(false);
 
-        // 1. Adım: Radyo kamerası önde
-        if (radioCamera != null) radioCamera.Priority = 20;
-        if (playerCamera != null) playerCamera.Priority = 10;
+        // Fade geçişini başlatıyoruz
+        ScreenFader.Instance.FadeTransition(
+            onHalfWay: () =>
+            {
+                // 1. AŞAMA: Ekran Siyahken (Kameralar ve Canvas'lar arkada ayarlanır)
+                if (radioCamera != null) radioCamera.Priority = 20;
+                if (playerCamera != null) playerCamera.Priority = 10;
 
-        // SADECE Radio Canvas açık olsun, diğerleri kapalı
-        if (radioCanvas != null) radioCanvas.SetActive(true);
-        if (playerCanvas != null) playerCanvas.SetActive(false);
-        if (summaryPanel != null) summaryPanel.SetActive(false);
-        if (marketPanel != null) marketPanel.SetActive(false);
+                if (radioCanvas != null) radioCanvas.SetActive(true);
+                if (playerCanvas != null) playerCanvas.SetActive(false);
+                if (summaryPanel != null) summaryPanel.SetActive(false);
+                if (marketPanel != null) marketPanel.SetActive(false);
 
-        Time.timeScale = 1f;
+                Time.timeScale = 1f;
+            },
+            onComplete: () =>
+            {
+                // 2. AŞAMA: Ekran Tamamen Açıldıktan SONRA Radyo Güvenle Başlar!
+                int currentDayToPlay = 1;
+                if (InteractableRandomChance.Instance != null)
+                {
+                    currentDayToPlay = Mathf.Max(1, InteractableRandomChance.Instance.CurrentDay);
+                }
 
-        int currentDay = 1;
-        if (InteractableRandomChance.Instance != null)
-        {
-            currentDay = InteractableRandomChance.Instance.CurrentDay;
-        }
+                if (WaveRadioSystem.Instance != null)
+                {
+                    WaveRadioSystem.Instance.OnWaveCompleted(currentDayToPlay);
+                }
+            }
+        );
 
-        if (WaveRadioSystem.Instance != null)
-        {
-            WaveRadioSystem.Instance.OnWaveCompleted(currentDay);
-        }
-
-        // Radyo sahnesinin süresi (Örn: Oyuncu radyoyu inceleyene kadar 3 saniye bekle veya tuşa basmasını sağla)
+        // Radyo sahnesinin bitmesini bekle (Enter ile geçilene kadar veya süre bitene kadar kilitli kalır)
         isRadioFinished = false;
         yield return new WaitUntil(() => isRadioFinished);
 
-        SetCursorState(false);
+        // --- RADYODAN OYUNCU KAMERASINA GEÇİŞ ---
+        ScreenFader.Instance.FadeTransition(() =>
+        {
+            SetCursorState(false);
 
-        // 2. Player kamerasını öne al
-        if (radioCamera != null) radioCamera.Priority = 10;
-        if (playerCamera != null) playerCamera.Priority = 20;
+            if (radioCamera != null) radioCamera.Priority = 10;
+            if (playerCamera != null) playerCamera.Priority = 20;
 
-        // Radyo Canvas'ı kapat, Player Canvas'ı aç
-        if (radioCanvas != null) radioCanvas.SetActive(false);
-        if (playerCanvas != null) playerCanvas.SetActive(true);
+            if (radioCanvas != null) radioCanvas.SetActive(false);
+            if (playerCanvas != null) playerCanvas.SetActive(true);
+        });
 
-        // Kamera geçişi için gerçek zamanlı kısa bir pay bırakıp oyunu başlat
         yield return new WaitForSecondsRealtime(1.0f);
         Time.timeScale = 1f;
 
-        // İlk günü başlat
         if (InteractableRandomChance.Instance != null)
         {
             InteractableRandomChance.Instance.StartNewDay();
         }
-
-        // Oyuncu markette alışverişini bitirip "Güne Başla" butonuna basana kadar 
-        // bu Coroutine burada durur. Butona basıldığında aşağıda yazdığımız 
-        // CloseMarketAndStartDay() fonksiyonunu çağıracağız.
     }
 
     // Radyo bittiğinde çağrılır
@@ -108,42 +112,39 @@ public class DayManager : MonoBehaviour
     {
         Time.timeScale = 0f; // Oyunu durdur
 
-        if (playerCanvas != null) playerCanvas.SetActive(false); // Oyun durunca player UI gizlensin
+        ScreenFader.Instance.FadeTransition(() =>
+         {
+             if (playerCanvas != null) playerCanvas.SetActive(false); // Oyun durunca player UI gizlensin
 
-        if (summaryPanel != null)
-        {
-            summaryPanel.SetActive(true); // Görev özeti ve XP panelini göster
-        }
+             if (summaryPanel != null)
+             {
+                 summaryPanel.SetActive(true); // Görev özeti ve XP panelini göster
+             }
 
-        SetCursorState(true); // Fareyi göster
+             SetCursorState(true); // Fareyi göster
+         });
     }
 
     // Özet panelindeki "Continue" butonuna bu bağlanacak
     public void OnSummaryContinuePressed()
     {
-        if (summaryPanel != null)
+        ScreenFader.Instance.FadeTransition(() =>
         {
-            summaryPanel.SetActive(false); // Özet panelini kapat
-        }
+            if (summaryPanel != null) summaryPanel.SetActive(false); // Özet panelini kapat
+            if (marketPanel != null) marketPanel.SetActive(true);    // Market panelini aç
 
-        // Hemen ardından Market panelini aç
-        if (marketPanel != null)
-        {
-            marketPanel.SetActive(true); // Marketi aç
-        }
-
-        SetCursorState(true); // Fareyi göster
+            SetCursorState(true); // Fareyi göster
+        });
     }
 
     // Market panelindeki "Güne Başla / Devam Et" butonuna bu fonksiyonu bağlayacaksın
     public void OnMarketContinuePressed()
     {
-        if (marketPanel != null)
-        {
-            marketPanel.SetActive(false); // Marketi kapat
-        }
-
-        if (radioCanvas != null) radioCanvas.SetActive(true);
+        ScreenFader.Instance.FadeTransition(() =>
+         {
+             if (marketPanel != null) marketPanel.SetActive(false); // Market panelini kapat
+             if (radioCanvas != null) radioCanvas.SetActive(true); // Oyuncu UI'ını aç
+         });
 
         Time.timeScale = 1f; // Oyunu tekrar başlat
 
