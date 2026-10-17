@@ -1874,11 +1874,11 @@ MonoBehaviour:
   - {fileID: 5086511704384299922}
   - {fileID: 5086511704329953639}
   - {fileID: 5086511704696081647}
-  activeCountPerRound: 5
-  roundTimeLimit: 20
+  baseActiveCount: 3
+  dayTimeLimit: 45
   earthquakeDuration: 5
   baseEarthquakeMagnitude: 0.1
-  magnitudeMultiplierPerRound: 0.05
+  magnitudeMultiplierPerDay: 0.08
   survivalMessageUI: {fileID: 155050040}
   timerText: {fileID: 231323403}
 --- !u!4 &1069024327
