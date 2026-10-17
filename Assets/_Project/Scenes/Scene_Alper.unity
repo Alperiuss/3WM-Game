@@ -1875,10 +1875,10 @@ MonoBehaviour:
   - {fileID: 5086511704329953639}
   - {fileID: 5086511704696081647}
   activeCountPerRound: 5
-  roundTimeLimit: 5
+  roundTimeLimit: 20
   earthquakeDuration: 5
-  baseEarthquakeMagnitude: 1
-  magnitudeMultiplierPerRound: 2
+  baseEarthquakeMagnitude: 0.1
+  magnitudeMultiplierPerRound: 0.05
   survivalMessageUI: {fileID: 155050040}
   timerText: {fileID: 231323403}
 --- !u!4 &1069024327
@@ -3808,7 +3808,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 457d5641d58939f4a8bf8ed47db12a60, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::InteractableObject
-  data: {fileID: 11400000, guid: c332cb3327b452a40bbea50ba3887949, type: 2}
+  data: {fileID: 11400000, guid: babda3f2462f10e4d951be369acdeb37, type: 2}
   requiredHoldTime: 2
   isInteractable: 1
   targetRenderer: {fileID: 7380666940780353155}
