@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class InteractableObject : MonoBehaviour
 {
-    [SerializeField] InteractableData data;
+    [SerializeField] private InteractableData data;
 
     [Header("Interaction Settings")]
     [SerializeField] private float requiredHoldTime = 2f; // Etkileşim için gereken süre (saniye)
@@ -24,26 +24,22 @@ public class InteractableObject : MonoBehaviour
 
     public bool IsInteractable => isInteractable && !isResolved;
     public float RequiredHoldTime => requiredHoldTime;
+    public InteractableData Data => data; // Veriye dışarıdan güvenli erişim
 
     private void Start()
     {
-        // Başlangıçta nesnenin rengini ayarla
         SetObjectColor(isInteractable ? normalColor : disabledColor);
 
         if (activeVisual != null) activeVisual.SetActive(isInteractable);
         if (resolvedVisual != null) resolvedVisual.SetActive(false);
     }
 
-    // GameManager bu fonksiyonu çağırarak nesnenin aktif/pasif durumunu belirleyecek
     public void SetInteractableState(bool state)
     {
         isInteractable = state;
         isResolved = false; // Yeni turda çözülme durumunu sıfırla
 
-        if (targetRenderer != null)
-        {
-            targetRenderer.material.color = isInteractable ? normalColor : disabledColor;
-        }
+        SetObjectColor(isInteractable ? normalColor : disabledColor);
 
         if (activeVisual != null) activeVisual.SetActive(isInteractable);
         if (resolvedVisual != null) resolvedVisual.SetActive(false);
@@ -64,11 +60,13 @@ public class InteractableObject : MonoBehaviour
         if (data != null)
         {
             Debug.Log($"Interacted with {data.objectName}.");
+
+            // Yöneticiye hangi görevin bittiğini bildiriyoruz
+            if (InteractableRandomChance.Instance != null)
+            {
+                InteractableRandomChance.Instance.NotifyObjectResolved(data.taskDescription);
+            }
         }
-
-        if (InteractableRandomChance.Instance != null)
-            InteractableRandomChance.Instance.NotifyObjectResolved();
-
 
         if (activeVisual != null) activeVisual.SetActive(false);
         if (resolvedVisual != null) resolvedVisual.SetActive(true);

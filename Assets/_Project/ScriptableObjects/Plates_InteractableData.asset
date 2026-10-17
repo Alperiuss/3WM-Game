@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Plates_InteractableData
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
   objectName: Plates
-  interactionPromt: Hold [E] to close
+  taskDescription: Organize the dishes
   interactionSound: {fileID: 0}

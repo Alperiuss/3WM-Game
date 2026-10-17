@@ -13,5 +13,7 @@ MonoBehaviour:
   m_Name: Phone_InteractableData
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
   objectName: Phone
-  interactionPromt: Hold [E] to close
+  taskDescription: '{Stress Item}'
+  requiresItem: 0
+  requiredItemName: 
   interactionSound: {fileID: 0}

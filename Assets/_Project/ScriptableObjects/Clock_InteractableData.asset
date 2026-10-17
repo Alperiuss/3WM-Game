@@ -13,5 +13,7 @@ MonoBehaviour:
   m_Name: Clock_InteractableData
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
   objectName: Clock
-  interactionPromt: Hold [E] to close
+  taskDescription: '{Stress Item}'
+  requiresItem: 0
+  requiredItemName: 
   interactionSound: {fileID: 0}

@@ -62,7 +62,6 @@ public class InteractableRandomChance : MonoBehaviour
                     timerText.text = string.Format("{0:00}:{1:00}", minutes, seconds);
                 }
 
-                // Süre bittiğinde HER KOŞULDA deprem başlar
                 if (currentTimer <= 0f)
                 {
                     currentTimer = 0f;
@@ -99,19 +98,14 @@ public class InteractableRandomChance : MonoBehaviour
             return;
         }
 
-        if (survivalMessageUI != null)
-            survivalMessageUI.SetActive(false);
-
         if (timerText != null)
             timerText.gameObject.SetActive(true);
 
-        // 1. ÖNEMLİ: Yeni gün başlarken önce TÜM eşyaları pasif yap (Hepsini sıfırla)
         foreach (var obj in allInteractable)
         {
             obj.SetInteractableState(false);
         }
 
-        // 2. Eşyaları karıştır ve bu gün için sadece belirlenen sayıda eşyayı aktif et
         List<InteractableObject> shuffledList = new List<InteractableObject>(allInteractable);
         for (int i = 0; i < shuffledList.Count; i++)
         {
@@ -121,26 +115,45 @@ public class InteractableRandomChance : MonoBehaviour
             shuffledList[randomIndex] = temp;
         }
 
-        // Gün ilerledikçe aktif olacak eşya sayısı artar (1. gün 3, 2. gün 4 vb.)
         int countToActivate = Mathf.Min(baseActiveCount, shuffledList.Count);
         baseActiveCount += 2;
         remainingActiveCount = countToActivate;
 
+        List<string> currentDayTaskDescriptions = new List<string>();
+
         for (int i = 0; i < countToActivate; i++)
         {
             shuffledList[i].SetInteractableState(true);
+
+            // Objenin içindeki ScriptableObject verisinden görev metnini alıyoruz
+            if (shuffledList[i].Data != null)
+            {
+                currentDayTaskDescriptions.Add(shuffledList[i].Data.taskDescription);
+            }
+        }
+
+        // UI yöneticisine görev listesini gönderiyoruz
+        if (TaskUIManager.Instance != null)
+        {
+            TaskUIManager.Instance.PopulateTasks(currentDayTaskDescriptions);
         }
 
         currentTimer = dayTimeLimit;
         isTimerRunning = true;
     }
 
-    public void NotifyObjectResolved()
+    public void NotifyObjectResolved(string taskDescription)
     {
         if (isEarthquakeActive || !isTimerRunning) return;
 
         remainingActiveCount--;
         Debug.Log("Kalan aktif nesne: " + remainingActiveCount);
+
+        // UI'daki görevin üzerini çizdiriyoruz
+        if (TaskUIManager.Instance != null)
+        {
+            TaskUIManager.Instance.CompleteTask(taskDescription);
+        }
 
         if (remainingActiveCount <= 0)
         {
@@ -167,10 +180,8 @@ public class InteractableRandomChance : MonoBehaviour
             timerText.text = "EARTHQUAKE!";
         }
 
-        // Gün ilerledikçe deprem şiddeti katlanarak artar
         float currentMagnitude = baseEarthquakeMagnitude + (currentDay * magnitudeMultiplierPerDay);
 
-        // Kamerayı deprem süresi boyunca sars
         if (CameraShake.Instance != null)
         {
             yield return StartCoroutine(CameraShake.Instance.Shake(earthquakeDuration, currentMagnitude));
@@ -180,7 +191,6 @@ public class InteractableRandomChance : MonoBehaviour
             yield return new WaitForSeconds(earthquakeDuration);
         }
 
-        // Deprem biterken / bittiğinde kontrol: Görev zamanında yapıldı mı?
         if (!isDayCompletedSuccessfully)
         {
             if (timerText != null)
@@ -195,7 +205,6 @@ public class InteractableRandomChance : MonoBehaviour
             isEarthquakeActive = false;
             yield return new WaitForSeconds(1.5f);
 
-            // Doğrudan yeni güne geçmek yerine önce Özet Paneli açılır:
             if (DayManager.Instance != null)
             {
                 DayManager.Instance.ShowDaySummary();
@@ -206,6 +215,5 @@ public class InteractableRandomChance : MonoBehaviour
     private void PlayerDeath()
     {
         Debug.Log(">>> ÖLÜM: Karakter depremde eşyaları yetiştiremediği için öldü!");
-        // Örnek: Time.timeScale = 0f; GameOverPanel.SetActive(true);
     }
 }

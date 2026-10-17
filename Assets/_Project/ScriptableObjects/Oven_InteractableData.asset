@@ -10,8 +10,10 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: a21d7619df3777643960fe57bc52461e, type: 3}
-  m_Name: Electricity_InteractableData 1
+  m_Name: Oven_InteractableData
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
-  objectName: Electricity
-  interactionPromt: Hold [E] to close
+  objectName: Oven
+  taskDescription: Shut off the gas valve
+  requiresItem: 0
+  requiredItemName: 
   interactionSound: {fileID: 0}
