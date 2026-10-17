@@ -43,6 +43,8 @@ public class InteractableRandomChance : MonoBehaviour
     {
         if (survivalMessageUI != null)
             survivalMessageUI.SetActive(false);
+
+        StartNewDay();
     }
 
     private void Update()
@@ -75,6 +77,9 @@ public class InteractableRandomChance : MonoBehaviour
     public void StartNewDay()
     {
         if (isEarthquakeActive) return;
+
+        if (survivalMessageUI != null)
+            survivalMessageUI.SetActive(false);
 
         currentDay++;
         Debug.Log("--- GÜN " + currentDay + " BAŞLADI ---");
