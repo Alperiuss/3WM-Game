@@ -8,6 +8,8 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
     [Header("Item Configuration")]
     [SerializeField] private string itemID = "item_unique_id";
     [SerializeField] private string itemName = "Kitchen Item";
+    [TextArea(2, 5)]
+    [SerializeField] private string itemDescription = "Bu eşya mutfağınızın verimliliğini artırır."; // YENİ EKLENEN AÇIKLAMA ALANI
 
     [Header("Upgrade Settings")]
     [SerializeField] private bool isUpgradable = false; 
@@ -20,7 +22,6 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
     [SerializeField] private TMP_Text priceText;
     [SerializeField] private TMP_Text levelText;
 
-    // Runtime state
     private int currentLevel = 0;
     private bool isSinglePurchased = false;
     private int currentPrice;
@@ -31,37 +32,29 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
         CalculatePrice();
         UpdateCardUI();
 
-        // HEÇ AÇILMAMA SORUNUNU ÇÖZEN KISIM:
-        // buyButton üzerindeki Button bileşenine onay panelini açma yetkisini bağladık!
         if (buyButton != null)
         {
             buyButton.onClick.AddListener(OpenConfirmationPopup);
         }
     }
 
-    // Kartın herhangi bir boş yerine tıklandığında çalışır
     public void OnPointerClick(PointerEventData eventData)
     {
         OpenConfirmationPopup();
     }
 
-    // Onay panelini açan ortak metot
     private void OpenConfirmationPopup()
+{
+    bool isCompleted = isUpgradable ? (currentLevel >= maxLevel) : isSinglePurchased;
+    if (isCompleted) return;
+
+    if (ConfirmationPanelMAnager.Instance != null)
     {
-        bool isCompleted = isUpgradable ? (currentLevel >= maxLevel) : isSinglePurchased;
-        if (isCompleted) return;
-
-        if (ConfirmationPanelMAnager.Instance != null)
-        {
-            ConfirmationPanelMAnager.Instance.OpenConfirmation(this, itemName);
-        }
-        else
-        {
-            Debug.LogError("[ItemCard]: Sahnede ConfirmationPanelManager bulunamadı!");
-        }
+        // Inspector'dan girilen itemName ve itemDescription verilerini panele aktarır
+        ConfirmationPanelMAnager.Instance.OpenConfirmation(this, itemName, itemDescription, currentPrice);
     }
+}
 
-    // Onay panelindeki YES butonuna basılınca çalışacak ASIL satın alma
     public void ConfirmPurchase()
     {
         if (isUpgradable)
@@ -107,7 +100,6 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
     {
         bool isCompleted = isUpgradable ? (currentLevel >= maxLevel) : isSinglePurchased;
 
-        // BuyButton üzerindeki Image'in şeffaflığını ayarlar
         if (buyButton != null)
         {
             Image buttonImage = buyButton.GetComponent<Image>();
@@ -129,7 +121,7 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
 
             if (priceText != null)
             {
-                priceText.text = (currentLevel >= maxLevel) ? "Completed" : $"{currentPrice} Fame";
+                priceText.text = (currentLevel >= maxLevel) ? "Completed" : $"{currentPrice} XP";
             }
         }
         else
@@ -141,7 +133,7 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
 
             if (priceText != null)
             {
-                priceText.text = isSinglePurchased ? "Purchased" : $"{basePrice} Fame";
+                priceText.text = isSinglePurchased ? "Purchased" : $"{basePrice} XP";
             }
         }
     }
@@ -160,4 +152,5 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
     }
 
     public string ItemName => itemName;
+    public string ItemDescription => itemDescription;
 }
