@@ -59,6 +59,10 @@ public class InteractableObject : MonoBehaviour
 
         Debug.Log("Obje ile etkileşime girildi, renk yeşile döndü!");
 
+        if (InteractableRandomChance.Instance != null)
+            InteractableRandomChance.Instance.NotifyObjectResolved();
+
+
         if (activeVisual != null) activeVisual.SetActive(false);
         if (resolvedVisual != null) resolvedVisual.SetActive(true);
     }
