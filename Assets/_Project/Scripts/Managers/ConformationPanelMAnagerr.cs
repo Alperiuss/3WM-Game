@@ -6,13 +6,18 @@ public class ConfirmationPanelMAnager : MonoBehaviour
 {
     public static ConfirmationPanelMAnager Instance { get; private set; }
 
-    [Header("UI References")]
-    [SerializeField] private GameObject popupPanel;     // Pop-up panelinin kendisi (ConfirmationPanel)
-    [SerializeField] private TMP_Text itemNameText;     // Tıklanan eşyanın adının yazacağı metin
-    [SerializeField] private Button yesButton;          // Satın almayı onaylayan YES butonu
-    [SerializeField] private Button noButton;           // Onayı iptal edip markete dönen NO butonu
+    [Header("UI Panels")]
+    [SerializeField] private GameObject popupPanel;
 
-    // O an tıklanmış ve onay bekleyen kart referansı
+    [Header("UI Text References")]
+    [SerializeField] private TMP_Text titleText;
+    [SerializeField] private TMP_Text descriptionText; // AÇIKLAMA METNİ İÇİN YENİ REFERANS
+    [SerializeField] private TMP_Text priceText;       // İSTEĞE BAĞLI FİYAT METNİ
+
+    [Header("UI Buttons")]
+    [SerializeField] private Button yesButton;
+    [SerializeField] private Button noButton;
+
     private ItemCard pendingItemCard;
 
     private void Awake()
@@ -24,70 +29,48 @@ public class ConfirmationPanelMAnager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
         }
     }
 
     private void Start()
     {
-        // YES ve NO butonlarının tıklama olaylarını bağlıyoruz
-        if (yesButton != null)
-        {
-            yesButton.onClick.AddListener(OnYesClicked);
-        }
+        if (yesButton != null) yesButton.onClick.AddListener(OnYesClicked);
+        if (noButton != null) noButton.onClick.AddListener(OnNoClicked);
 
-        if (noButton != null)
-        {
-            noButton.onClick.AddListener(OnNoClicked);
-        }
-
-        // Oyun başladığında pop-up varsayılan olarak kapalı kalsın
         HidePanel();
     }
 
-    // ItemCard tarafından çağrılan açılış metodu
-    public void OpenConfirmation(ItemCard card, string nameOfItem)
+    // Kart tıklandığında çalışan açılış metodu
+    public void OpenConfirmation(ItemCard card, string title, string description, int price = 0)
     {
         pendingItemCard = card;
 
-        if (itemNameText != null)
-        {
-            itemNameText.text = nameOfItem;
-        }
+        if (titleText != null) titleText.text = title;
+        if (descriptionText != null) descriptionText.text = description;
+        if (priceText != null && price > 0) priceText.text = $"{price} Fame";
 
-        if (popupPanel != null)
-        {
-            popupPanel.SetActive(true);
-        }
+        if (popupPanel != null) popupPanel.SetActive(true);
     }
 
-    // YES BUTONUNA BASILDIĞINDA (Satın Alma İşlemi Onaylanır)
     private void OnYesClicked()
     {
         if (pendingItemCard != null)
         {
-            // Kartın içindeki satın alma/yükseltme mantığını çalıştırır
             pendingItemCard.ConfirmPurchase();
         }
 
-        // İşlem tamamlandıktan sonra paneli kapatır
         HidePanel();
     }
 
-    // NO BUTONUNA BASILDIĞINDA (İptal Edilir ve Markete Dönülür)
     private void OnNoClicked()
     {
-        // Hiçbir işlem yapmadan doğrudan paneli kapatarak markete döner
         HidePanel();
     }
 
-    // Paneli Gizleme / Sıfırlama Metodu
     public void HidePanel()
     {
         pendingItemCard = null;
-
-        if (popupPanel != null)
-        {
-            popupPanel.SetActive(false);
-        }
+        if (popupPanel != null) popupPanel.SetActive(false);
     }
 }
