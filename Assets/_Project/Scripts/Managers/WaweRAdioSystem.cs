@@ -11,6 +11,11 @@ public class WaveRadioSystem : MonoBehaviour
     public class WaveBroadcast
     {
         public int waveNumber; // Hangi bölüm sonrası çalışacak (Örn: 1, 2, 3...)
+        
+        [Header("Timing Settings (Per Wave)")]
+        public float typingSpeed = 0.04f;   // Bu wave'e özel harf yazma hızı
+        public float displayDuration = 3.5f; // Bu wave'e özel cümlede bekleme süresi
+
         [TextArea(2, 4)]
         public string[] messages; // O bölüm sonunda çıkacak parça parça metinler
     }
@@ -21,10 +26,6 @@ public class WaveRadioSystem : MonoBehaviour
     [Header("UI References")]
     [SerializeField] private GameObject radioPanel;
     [SerializeField] private TMP_Text radioText;
-
-    [Header("Radio Settings")]
-    [SerializeField] private float typingSpeed = 0.04f;   // Harf yazma hızı (saniye)
-    [SerializeField] private float displayDuration = 3.5f; // Cümle bittiğinde ekranda bekleme süresi
 
     private Coroutine currentRadioCoroutine;
 
@@ -59,7 +60,7 @@ public class WaveRadioSystem : MonoBehaviour
 
         if (broadcast != null && broadcast.messages.Length > 0)
         {
-            PlayRadioBroadcast(broadcast.messages);
+            PlayRadioBroadcast(broadcast);
         }
         else
         {
@@ -67,32 +68,33 @@ public class WaveRadioSystem : MonoBehaviour
         }
     }
 
-    private void PlayRadioBroadcast(string[] messages)
+    private void PlayRadioBroadcast(WaveBroadcast broadcast)
     {
         if (currentRadioCoroutine != null)
         {
             StopCoroutine(currentRadioCoroutine);
         }
 
-        currentRadioCoroutine = StartCoroutine(BroadcastRoutine(messages));
+        currentRadioCoroutine = StartCoroutine(BroadcastRoutine(broadcast));
     }
 
-    private IEnumerator BroadcastRoutine(string[] messages)
+    private IEnumerator BroadcastRoutine(WaveBroadcast broadcast)
     {
         radioPanel.SetActive(true);
 
-        foreach (string message in messages)
+        foreach (string message in broadcast.messages)
         {
             radioText.text = "";
 
-            // Daktilo efekti
+            // O wave'e özel daktilo hızı (typingSpeed) kullanılır
             foreach (char letter in message.ToCharArray())
             {
                 radioText.text += letter;
-                yield return new WaitForSeconds(typingSpeed);
+                yield return new WaitForSeconds(broadcast.typingSpeed);
             }
 
-            yield return new WaitForSeconds(displayDuration);
+            // O wave'e özel bekleme süresi (displayDuration) kullanılır
+            yield return new WaitForSeconds(broadcast.displayDuration);
         }
 
         radioText.text = "";
