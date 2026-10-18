@@ -310,5 +310,6 @@ public class InteractableRandomChance : MonoBehaviour
     private void PlayerDeath()
     {
         Debug.Log(">>> GAME OVER: Ölüm ekranı açılıyor.");
+        DayManager.Instance.ShowDaySummary();
     }
 }
