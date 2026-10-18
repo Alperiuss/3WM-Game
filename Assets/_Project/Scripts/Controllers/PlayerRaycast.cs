@@ -7,6 +7,8 @@ public class PlayerRaycast : MonoBehaviour
     [Header("Raycast Settings")]
     [SerializeField] private float interactionDistance = 3f;
     [SerializeField] private LayerMask interactableLayer;
+    [Tooltip("Duvar/mobilya gibi bakışı engelleyen katmanlar (eşyaya duvarın arkasından etkileşimi önler)")]
+    [SerializeField] private LayerMask blockingLayers = 1; // Default
 
     [Header("UI Settings")]
     [SerializeField] private GameObject interactionPromptUI;
@@ -20,13 +22,15 @@ public class PlayerRaycast : MonoBehaviour
 
     private void OnEnable()
     {
-        if (interactActionReference != null)
+        if (interactActionReference != null && interactActionReference.action != null)
             interactActionReference.action.Enable();
+        else
+            Debug.LogWarning("[PlayerRaycast] Interact Action Reference atanmamış, etkileşim çalışmayacak.", this);
     }
 
     private void OnDisable()
     {
-        if (interactActionReference != null)
+        if (interactActionReference != null && interactActionReference.action != null)
             interactActionReference.action.Disable();
     }
 
@@ -37,14 +41,14 @@ public class PlayerRaycast : MonoBehaviour
 
     void CheckForInteractable()
     {
-        Transform origin = Camera.main != null ? Camera.main.transform : transform;
-        Ray ray = new Ray(origin.position, origin.forward);
+        Ray ray = new Ray(transform.position, transform.forward);
         RaycastHit hit;
 
         bool foundInteractable = false;
         InteractableObject hitInteractable = null;
 
-        if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer, QueryTriggerInteraction.Ignore))
+        int mask = interactableLayer.value | blockingLayers.value;
+        if (Physics.Raycast(ray, out hit, interactionDistance, mask, QueryTriggerInteraction.Ignore))
         {
             InteractableObject interactable = hit.collider.GetComponent<InteractableObject>();
             if (interactable == null)
@@ -70,7 +74,7 @@ public class PlayerRaycast : MonoBehaviour
         if (currentTarget != null)
         {
             // E tuşuna basılıyor mu? (Basılı tutma)
-            if (interactActionReference != null && interactActionReference.action.IsPressed())
+            if (interactActionReference != null && interactActionReference.action != null && interactActionReference.action.IsPressed())
             {
                 // =============================================================
                 // MATKAP / TAMİR SESİ: Zaten çalmıyorsa başlat (Üst üste binmez!)
@@ -79,11 +83,9 @@ public class PlayerRaycast : MonoBehaviour
                 {
                     AudioManager.Instance.PlaySFX("drill");
                 }
-                // Hızlı Tamir Kiti çarpanı
-                float speedMultiplier = (ItemEffectsManager.Instance != null) ? ItemEffectsManager.Instance.repairSpeedMultiplier : 1f;
-                currentHoldTime += Time.deltaTime * speedMultiplier;
-                // Süre dolduysa etkileşimi gerçekleştir
-                if (currentHoldTime >= currentTarget.RequiredHoldTime)
+                currentHoldTime += Time.deltaTime;
+                // Süre dolduysa etkileşimi gerçekleştir (Tamir Çantası / Elektrik Bandı süreyi kısaltır)
+                if (currentHoldTime >= GetEffectiveHoldTime(currentTarget))
                 {
                     // Tamir bittiğinde matkap sesini HEMEN DURDUR
                     if (AudioManager.Instance != null)
@@ -118,10 +120,11 @@ public class PlayerRaycast : MonoBehaviour
         // Halkanın doluluk oranını ve görünürlüğünü yönet
         if (progressRingImage != null)
         {
-            if (currentTarget != null && currentTarget.RequiredHoldTime > 0f)
+            float holdTime = currentTarget != null ? GetEffectiveHoldTime(currentTarget) : 0f;
+            if (holdTime > 0f)
             {
                 progressRingImage.gameObject.SetActive(true);
-                progressRingImage.fillAmount = currentHoldTime / currentTarget.RequiredHoldTime;
+                progressRingImage.fillAmount = currentHoldTime / holdTime;
             }
             else
             {
@@ -134,6 +137,11 @@ public class PlayerRaycast : MonoBehaviour
         {
             interactionPromptUI.SetActive(foundInteractable);
         }
+    }
+
+    private static float GetEffectiveHoldTime(InteractableObject target)
+    {
+        return target.RequiredHoldTime * ItemEffectsManager.RepairTimeMultiplier(target.Data);
     }
 
     void OnDrawGizmos()

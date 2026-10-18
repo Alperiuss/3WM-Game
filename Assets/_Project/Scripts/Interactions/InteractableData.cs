@@ -13,5 +13,9 @@ public class InteractableData : ScriptableObject
     [Header("Stress Mechanics")]
     public bool isNoiseMaker;
 
+    [Header("Repair")]
+    [Tooltip("Elektrikli eşya mı? (Elektrik Bandı bu eşyaların tamirini hızlandırır)")]
+    public bool isElectrical;
+
     public AudioClip interactionSound;
 }

@@ -1,24 +1,41 @@
 using UnityEngine;
 
+/// <summary>
+/// Marketten alınan tek seferlik eşyaların oyun içi pasif etkileri.
+/// Satın alma durumu ItemCard'ın kaydettiği "Bought_{itemID}" anahtarından okunur.
+/// Diğer scriptler statik yardımcıları kullanır; sahnede bu obje olmasa bile varsayılan (etkisiz) değerler döner.
+/// </summary>
 public class ItemEffectsManager : MonoBehaviour
 {
     public static ItemEffectsManager Instance { get; private set; }
 
-    [Header("Tamir & İnşaat Eşyaları")]
-    [Tooltip("Hızlı Tamir Kiti alındıysa tamir hızı artar (Örn: %50 daha hızlı)")]
-    public float repairSpeedMultiplier = 1f;
-    public bool hasQuickRepairKit = false;
-    public bool hasElectricalTape = false; // Elektrik Bandı alındı mı?
-    public bool hasScrew = false;          // Vida alındı mı?
-    public bool hasHouseUpgrade = false;   // Ev Geliştirmesi alındı mı?
+    // Market kartlarındaki itemID'ler (Canvas.prefab > ItemCard)
+    public const string RepairKitId = "item_repairkit_01";
+    public const string StressMedicineId = "item_medication_01";
+    public const string ElectricalTapeId = "item_electricaltape_01";
+    public const string HouseUpgradeId = "item_houseImprove_01";
+    public const string AlarmId = "item_alarm_01";
+    public const string FirstAidKitId = "item_firstAid_01";
 
-    [Header("Hayatta Kalma & Karakter Eşyaları")]
-    [Tooltip("Sakinleştirici alındıysa panik dolumu yavaşlar (Örn: 0.70x çarpan)")]
-    public float panicRateMultiplier = 1f;
-    public bool hasSedative = false;       // Sakinleştirici alındı mı?
-    public bool hasDisasterBag = false;    // Afet Çantası alındı mı?
-    public bool hasGasAlarm = false;       // Gaz Alarmı alındı mı?
-    public bool hasLocker = false;         // Locker / Dolap alındı mı?
+    [Header("Ev Geliştirmesi")]
+    [SerializeField] private float houseUpgradeBonusSeconds = 10f;
+
+    [Header("Tamir Çantası / Elektrik Bandı (süre çarpanı, 0.5 = yarı süre)")]
+    [SerializeField] private float repairKitTimeMultiplier = 0.5f;
+    [SerializeField] private float electricalTapeTimeMultiplier = 0.5f;
+
+    [Header("Sağlık Kiti")]
+    [SerializeField] private int firstAidExtraSafeZones = 1;
+
+    [Header("Stres İlacı (stres dolum çarpanı)")]
+    [SerializeField] private float stressMedicineRateMultiplier = 0.9f;
+
+    public bool HasRepairKit { get; private set; }
+    public bool HasStressMedicine { get; private set; }
+    public bool HasElectricalTape { get; private set; }
+    public bool HasHouseUpgrade { get; private set; }
+    public bool HasAlarm { get; private set; }
+    public bool HasFirstAidKit { get; private set; }
 
     private void Awake()
     {
@@ -32,74 +49,65 @@ public class ItemEffectsManager : MonoBehaviour
             return;
         }
 
-        // Oyun sahnesi açılır açılmaz tüm eşyaların alınıp alınmadığını kontrol et
-        LoadAllItemEffects();
+        Refresh();
     }
 
-    /// <summary>
-    /// PlayerPrefs'ten "Bought_itemID" kayıtlarını okur ve oyun içi etkilere dönüştürür.
-    /// </summary>
-    public void LoadAllItemEffects()
+    private void OnDestroy()
     {
-        // -------------------------------------------------------------
-        // 1. TAMİR & İNŞAAT EŞYALARI
-        // -------------------------------------------------------------
-        hasQuickRepairKit = IsOwned("item_repairkit_01", "quick_repair_kit");
-        hasElectricalTape = IsOwned("item_electricaltape_01", "electrical_tape");
-        hasScrew          = IsOwned("item_screw_01", "screw");
-        hasHouseUpgrade   = IsOwned("item_houseImprove_01", "house_upgrade");
-
-        // Hızlı tamir kiti alındıysa tamir hızını 1.5x (%50 daha hızlı) yap, yoksa normal 1.0x
-        repairSpeedMultiplier = hasQuickRepairKit ? 1.5f : 1.0f;
-
-
-        // -------------------------------------------------------------
-        // 2. HAYATTA KALMA & KARAKTER EŞYALARI
-        // -------------------------------------------------------------
-        hasSedative    = IsOwned("item_medication_01", "sedative");
-        hasDisasterBag = IsOwned("item_firstAid_01", "disaster_bag");
-        hasGasAlarm    = IsOwned("item_alarm_01", "gas_alarm");
-        hasLocker      = IsOwned("item_Lock_01", "locker");
-
-        // Sakinleştirici alındıysa panik dolumunu %30 yavaşlat (0.7x), yoksa normal 1.0x
-        panicRateMultiplier = hasSedative ? 0.7f : 1.0f;
-
-        Debug.Log("[ItemEffectsManager] Tüm tekil eşyalar başarıyla yüklendi!");
+        if (Instance == this) Instance = null;
     }
 
-    /// <summary>
-    /// ItemCard'ın kaydettiği "Bought_" anahtarına bakar.
-    /// </summary>
-    private bool IsOwned(params string[] itemIDs)
+    /// <summary>Satın alma kayıtlarını yeniden okur (market alımından veya sıfırlamadan sonra çağrılır).</summary>
+    public void Refresh()
     {
-        for (int i = 0; i < itemIDs.Length; i++)
-        {
-            string id = itemIDs[i];
-            if (PlayerPrefs.GetInt("Bought_" + id, 0) == 1)
-                return true;
-            if (PlayerPrefs.GetInt("Level_" + id, 0) > 0)
-                return true;
-        }
-
-        return false;
+        HasRepairKit = IsBought(RepairKitId);
+        HasStressMedicine = IsBought(StressMedicineId);
+        HasElectricalTape = IsBought(ElectricalTapeId);
+        HasHouseUpgrade = IsBought(HouseUpgradeId);
+        HasAlarm = IsBought(AlarmId);
+        HasFirstAidKit = IsBought(FirstAidKitId);
     }
 
-    // =========================================================================
-    // INSPECTOR SAĞ TIK TEST MENÜSÜ (Game Jam testleri için aşırı pratik)
-    // =========================================================================
+    /// <summary>Eski "seviyeli" kayıtlar da (Level_) satın alınmış sayılır.</summary>
+    public static bool IsBought(string itemID)
+    {
+        return PlayerPrefs.GetInt("Bought_" + itemID, 0) == 1 || PlayerPrefs.GetInt("Level_" + itemID, 0) > 0;
+    }
+
+    // ------------------------------------------------------------------ Statik yardımcılar
+
+    /// <summary>Bir eşyanın tamir süresine uygulanacak çarpan (1 = normal).</summary>
+    public static float RepairTimeMultiplier(InteractableData data)
+    {
+        ItemEffectsManager m = Instance;
+        if (m == null) return 1f;
+
+        float multiplier = 1f;
+        if (m.HasRepairKit) multiplier *= m.repairKitTimeMultiplier;
+        if (m.HasElectricalTape && data != null && data.isElectrical) multiplier *= m.electricalTapeTimeMultiplier;
+        return multiplier;
+    }
+
+    /// <summary>Her güne eklenen kalıcı bonus süre (saniye).</summary>
+    public static float BonusDaySeconds => Instance != null && Instance.HasHouseUpgrade ? Instance.houseUpgradeBonusSeconds : 0f;
+
+    /// <summary>Gösterilecek ilave güvenli alan sayısı.</summary>
+    public static int ExtraSafeZones => Instance != null && Instance.HasFirstAidKit ? Instance.firstAidExtraSafeZones : 0;
+
+    /// <summary>Stres barı dolum hızı çarpanı (1 = normal).</summary>
+    public static float StressRateMultiplier => Instance != null && Instance.HasStressMedicine ? Instance.stressMedicineRateMultiplier : 1f;
+
+    /// <summary>Gün başında bir tehlikenin yeri işaretlensin mi?</summary>
+    public static bool AlarmActive => Instance != null && Instance.HasAlarm;
+
+    // ------------------------------------------------------------------ Test menüsü
 
     [ContextMenu("Test: Alınan Eşyaları Konsola Yaz")]
     private void DebugPrintItems()
     {
-        Debug.Log("==== [SATIN ALINAN EŞYALAR] ====");
-        Debug.Log($"Hızlı Tamir Kiti : {hasQuickRepairKit} (Hız Çarpanı: {repairSpeedMultiplier})");
-        Debug.Log($"Sakinleştirici   : {hasSedative} (Panik Çarpanı: {panicRateMultiplier})");
-        Debug.Log($"Elektrik Bandı   : {hasElectricalTape}");
-        Debug.Log($"Vida             : {hasScrew}");
-        Debug.Log($"Ev Geliştirmesi  : {hasHouseUpgrade}");
-        Debug.Log($"Afet Çantası     : {hasDisasterBag}");
-        Debug.Log($"Gaz Alarmı       : {hasGasAlarm}");
-        Debug.Log($"Locker (Dolap)   : {hasLocker}");
+        Refresh();
+        Debug.Log($"[ItemEffectsManager] Tamir Çantası={HasRepairKit} | Elektrik Bandı={HasElectricalTape} | Ev Geliştirmesi={HasHouseUpgrade} | " +
+                  $"Sağlık Kiti={HasFirstAidKit} | Stres İlacı={HasStressMedicine} | Alarm={HasAlarm}");
     }
 
     [ContextMenu("Test: Tüm Alımları Sıfırla (PlayerPrefs Reset)")]
@@ -107,7 +115,7 @@ public class ItemEffectsManager : MonoBehaviour
     {
         PlayerPrefs.DeleteAll();
         PlayerPrefs.Save();
-        LoadAllItemEffects();
+        Refresh();
         Debug.LogWarning("[ItemEffectsManager] Tüm eşya alımları sıfırlandı!");
     }
 }

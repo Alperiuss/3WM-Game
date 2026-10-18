@@ -166,6 +166,12 @@ public class AudioManager : MonoBehaviour
         }
     }
 
+    public bool HasSFX(string name)
+    {
+        if (sounds == null || string.IsNullOrEmpty(name)) return false;
+        return Array.Exists(sounds, sound => sound != null && sound.name != null && string.Equals(sound.name.Trim(), name.Trim(), StringComparison.OrdinalIgnoreCase));
+    }
+
     public bool IsPlayingSFX(string name)
     {
         if (sounds == null || string.IsNullOrEmpty(name)) return false;

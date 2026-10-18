@@ -27,7 +27,9 @@ public class CameraShake : MonoBehaviour
         {
             if (AudioManager.Instance != null)
             {
-                AudioManager.Instance.PlaySFX("Earthquake");
+                // AudioManager listesinde ses "Eathquake" adıyla kayıtlı; ikisini de dene
+                if (AudioManager.Instance.HasSFX("Earthquake")) AudioManager.Instance.PlaySFX("Earthquake");
+                else AudioManager.Instance.PlaySFX("Eathquake");
                 
            }
             // Deprem başladığında titremeyi aç ve şiddeti ayarla
@@ -41,9 +43,10 @@ public class CameraShake : MonoBehaviour
         // Süre bitince titremeyi tamamen sıfırla
         if (perlinComponent != null)
         {
-            if (AudioManager.Instance != null && AudioManager.Instance.IsPlayingSFX("Earthquake"))
+            if (AudioManager.Instance != null)
             {
                 AudioManager.Instance.StopSFX("Earthquake");
+                AudioManager.Instance.StopSFX("Eathquake");
             }
             perlinComponent.AmplitudeGain = 0f;
             perlinComponent.FrequencyGain = 0f;

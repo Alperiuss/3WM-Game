@@ -96,17 +96,18 @@ public class WaveRadioSystem : MonoBehaviour
     {
         radioPanel.SetActive(true);
 
+        if (RadioChatter.Instance != null) RadioChatter.Instance.BeginBroadcast();
+
         // ⭐ EKRAN AÇILIRKEN OYUNCU KAÇIRMASIN DİYE MİNİK BİR GECİKME (Yarım saniye)
         yield return new WaitForSecondsRealtime(0.5f);
-        if (AudioManager.Instance != null)
-        {
-            AudioManager.Instance.PlaySFX("Alper");
-        }
 
         foreach (string message in broadcast.messages)
         {
             radioText.text = "";
             submitActionPressed = false;
+
+            // Yazı yazılırken radyodan anlaşılmayan cızırtılı konuşma gelir
+            if (RadioChatter.Instance != null) RadioChatter.Instance.SetTalking(true);
 
             // 1. Aşama: Harf harf daktilo yazma efekti
             foreach (char letter in message.ToCharArray())
@@ -124,6 +125,8 @@ public class WaveRadioSystem : MonoBehaviour
 
             submitActionPressed = false;
 
+            if (RadioChatter.Instance != null) RadioChatter.Instance.SetTalking(false);
+
             // 2. Aşama: Cümlenin ekranda kalma/bekleme süresi
             float waitTimer = broadcast.displayDuration;
             while (waitTimer > 0f)
@@ -138,14 +141,12 @@ public class WaveRadioSystem : MonoBehaviour
                 yield return null;
             }
         }
-        if (AudioManager.Instance != null && AudioManager.Instance.IsPlayingSFX("Alper"))
-        {
-            AudioManager.Instance.StopSFX("Alper");
-        }
 
         radioText.text = "";
         radioPanel.SetActive(false);
         currentRadioCoroutine = null;
+
+        if (RadioChatter.Instance != null) RadioChatter.Instance.EndBroadcast();
 
         if (DayManager.Instance != null)
         {

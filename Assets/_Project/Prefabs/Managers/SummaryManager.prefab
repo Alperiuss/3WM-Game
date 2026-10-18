@@ -46,8 +46,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SummaryUIManager
   currentRound: 1
   requiredTasksPerRound: 02000000030000000300000004000000
-  xpPerCompletedTask: 200
-  victoryBonusXP: 150
+  xpPerCompletedTask: 40
+  victoryBonusXP: 80
   autoAddToCurrencyManager: 1
   successfulPanel: {fileID: 0}
   unsuccessfulPanel: {fileID: 0}

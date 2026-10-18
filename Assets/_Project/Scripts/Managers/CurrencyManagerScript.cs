@@ -7,7 +7,9 @@ public class CurrencyManager : MonoBehaviour
     public static CurrencyManager Instance { get; private set; }
 
     [Header("Currency Settings")]
-    [SerializeField] private int currentFame = 1000;
+    [Tooltip("Yeni oyunun başlangıç parası")]
+    [SerializeField] private int currentFame = 100;
+    private int startingFame;
 
     [Header("UI References")]
     [SerializeField] private TMP_Text fameText;
@@ -34,7 +36,23 @@ public class CurrencyManager : MonoBehaviour
             return;
         }
 
+        startingFame = currentFame;
         LoadFame();
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance == this) Instance = null;
+    }
+
+    public int CurrentFame => currentFame;
+
+    /// <summary>Yeni oyunda parayı başlangıç değerine döndürür.</summary>
+    public void ResetToStartingFame()
+    {
+        currentFame = startingFame;
+        SaveFame();
+        UpdateUI();
     }
 
     private void Start()
@@ -90,7 +108,7 @@ public class CurrencyManager : MonoBehaviour
         SetWarningActive(true);
 
         // Belirlenen süre kadar ekranda tut
-        yield return new WaitForSecondsRealtime(warningDuration);
+        yield return new WaitForSeconds(warningDuration);
 
         // Süre dolunca tekrar kapat
         SetWarningActive(false);
@@ -115,7 +133,7 @@ public class CurrencyManager : MonoBehaviour
 
     private void LoadFame()
     {
-        currentFame = PlayerPrefs.GetInt(FAME_KEY, 1000);
+        currentFame = PlayerPrefs.GetInt(FAME_KEY, startingFame);
     }
 
     private void UpdateUI()
@@ -130,13 +148,9 @@ public class CurrencyManager : MonoBehaviour
 
     public void OnContinuePressed()
     {
-        if (DayManager.Instance != null)
-        {
-            DayManager.Instance.OnMarketContinuePressed();
-            return;
-        }
-
         if (shopPanel != null)
+        {
             shopPanel.SetActive(false);
+        }
     }
 }

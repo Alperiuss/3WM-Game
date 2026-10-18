@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Clock_InteractableData
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
   objectName: Clock
-  taskDescription: '{Stress Item}'
+  taskDescription: Silence the noisy devices
   requiresItem: 0
   requiredItemName: 
   isNoiseMaker: 1

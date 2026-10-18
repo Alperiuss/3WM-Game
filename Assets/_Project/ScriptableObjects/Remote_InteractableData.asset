@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: Remote_InteractableData
   m_EditorClassIdentifier: Assembly-CSharp::InteractableData
   objectName: Remote
-  taskDescription: '{Stress Item}'
+  taskDescription: Silence the noisy devices
   requiresItem: 0
   requiredItemName: 
   isNoiseMaker: 1
+  isElectrical: 1
   interactionSound: {fileID: 0}

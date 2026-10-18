@@ -129,8 +129,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::SummaryUIManager
   currentRound: 1
   requiredTasksPerRound: 02000000030000000300000004000000
-  xpPerCompletedTask: 200
-  victoryBonusXP: 150
+  xpPerCompletedTask: 40
+  victoryBonusXP: 80
   autoAddToCurrencyManager: 1
   successfulPanel: {fileID: 0}
   unsuccessfulPanel: {fileID: 0}
@@ -234,7 +234,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 649688ec2e4100343b82c6d968d0c825, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CurrencyManagerScript
-  currentFame: 1000
+  currentFame: 100
   fameText: {fileID: 0}
   shopPanel: {fileID: 0}
   warningPanel: {fileID: 0}

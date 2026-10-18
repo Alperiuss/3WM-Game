@@ -1,8 +1,6 @@
 using UnityEngine;
-using UnityEngine.InputSystem;
 using System.Collections;
 using Unity.Cinemachine;
-using StarterAssets;
 
 public class DayManager : MonoBehaviour
 {
@@ -19,19 +17,11 @@ public class DayManager : MonoBehaviour
     [SerializeField] private GameObject marketPanel;
 
     [Header("Player Spawn & Movement")]
-    [SerializeField] private Transform playerSpawnPoint;
-    [SerializeField] private MonoBehaviour playerMovementScript;
+    [SerializeField] private Transform playerSpawnPoint;     // Karakterin her gün başlayacağı nokta
+    [SerializeField] private MonoBehaviour playerMovementScript; // Karakterin hareket scripti (örn: FirstPersonController)
 
-    private GameObject playerObject;
-    private CharacterController playerCharacterController;
-    private PlayerInput playerInput;
-    private StarterAssetsInputs playerInputs;
-    private FirstPersonController firstPersonController;
     private bool isRadioFinished = false;
     private bool isFirstGameLaunch = true;
-    private bool playerMotorInitialized = false;
-    private bool isTransitioningToMarket;
-    private Coroutine gameSequenceRoutine;
 
     private void Awake()
     {
@@ -46,13 +36,24 @@ public class DayManager : MonoBehaviour
         }
     }
 
-    private void Start()
+    private void OnDestroy()
     {
-        SetupRadioPresentation();
-        gameSequenceRoutine = StartCoroutine(GameSequenceRoutine(true));
+        if (Instance == this) Instance = null;
     }
 
-    private void SetupRadioPresentation()
+    /// <summary>Oyuncu hareketini dışarıdan (deprem, ölüm ekranı) açıp kapatmak için.</summary>
+    public void SetPlayerControl(bool canMove)
+    {
+        SetPlayerMovement(canMove);
+    }
+
+    private void Start()
+    {
+        SetupRadioCameraInitially();
+        StartCoroutine(GameSequenceRoutine(true));
+    }
+
+    private void SetupRadioCameraInitially()
     {
         if (radioCamera != null) radioCamera.Priority = 20;
         if (playerCamera != null) playerCamera.Priority = 10;
@@ -62,192 +63,118 @@ public class DayManager : MonoBehaviour
         {
             playerCanvas.SetActive(true);
             CanvasGroup group = playerCanvas.GetComponent<CanvasGroup>();
-            if (group != null) group.alpha = 0f;
+            if (group != null) group.alpha = 0f; // Başlangıçta gizli
         }
         if (summaryPanel != null) summaryPanel.SetActive(false);
         if (marketPanel != null) marketPanel.SetActive(false);
 
+        // Radyo aşamasında hareket kesinlikle kapalı olmalı!
+        SetPlayerMovement(false);
         SetCursorState(false);
     }
 
     private IEnumerator GameSequenceRoutine(bool isStartingGame = false)
     {
-        yield return StartCoroutine(InitializePlayerMotorThenLock());
+        SetPlayerMovement(false);
+
+        ScreenFader.Transition(
+            onHalfWay: () =>
+            {
+                Time.timeScale = 1f;
+            },
+            onComplete: () =>
+            {
+                int currentDayToPlay = 1;
+                if (InteractableRandomChance.Instance != null)
+                {
+                    currentDayToPlay = Mathf.Max(1, InteractableRandomChance.Instance.CurrentDay);
+                }
+
+                if (WaveRadioSystem.Instance != null)
+                {
+                    WaveRadioSystem.Instance.OnWaveCompleted(currentDayToPlay);
+                }
+            }
+        );
 
         isRadioFinished = false;
-
-        if (ScreenFader.Instance != null)
-        {
-            ScreenFader.Instance.FadeTransition(
-                onHalfWay: () =>
-                {
-                    Time.timeScale = 1f;
-                },
-                onComplete: StartRadioBroadcast
-            );
-        }
-        else
-        {
-            StartRadioBroadcast();
-        }
-
         yield return new WaitUntil(() => isRadioFinished);
 
-        if (ScreenFader.Instance != null)
-        {
-            ScreenFader.Instance.FadeTransition(
-                onHalfWay: SwitchToPlayerAndSpawn,
-                onComplete: () => CompletePlayerHandoff(isStartingGame)
-            );
-        }
-        else
-        {
-            SwitchToPlayerAndSpawn();
-            CompletePlayerHandoff(isStartingGame);
-        }
+        // --- RADYODAN OYUNCU KAMERASINA GEÇİŞ (Kamera değişimi kesinlikle siyah ekranda yapılır) ---
+        ScreenFader.Transition(
+            onHalfWay: () =>
+            {
+                SetCursorState(false);
+
+                // Ekran tamamen siyahken kamera ve aktif canvas ayarlanır (Zıplama önlenir)
+                if (radioCamera != null) radioCamera.Priority = 10;
+                if (playerCamera != null) playerCamera.Priority = 20;
+
+                if (radioCanvas != null) radioCanvas.SetActive(false);
+
+                if (playerCanvas != null)
+                {
+                    playerCanvas.SetActive(true);
+                    CanvasGroup group = playerCanvas.GetComponent<CanvasGroup>();
+                    if (group != null) group.alpha = 0f; // Ekran açılırken görünmez başlar
+                }
+
+                // KARAKTERİ HER GÜN AYNI YERE IŞINLA (Spawn Point)
+                ResetPlayerPosition();
+            },
+            onComplete: () =>
+            {
+                Time.timeScale = 1f;
+
+                // Ekran açıldıktan sonra Player Canvas'ı yumuşak bir fade-in ile açıyoruz
+                StartCoroutine(FadeInPlayerCanvasRoutine());
+
+                // Kilitleri aç ve karakterin hareket etmesine izin ver!
+                SetPlayerMovement(true);
+
+                if (InteractableRandomChance.Instance != null)
+                {
+                    if (isStartingGame && isFirstGameLaunch)
+                    {
+                        InteractableRandomChance.Instance.StartNewDay();
+                        isFirstGameLaunch = false;
+                    }
+                    else if (!isStartingGame)
+                    {
+                        InteractableRandomChance.Instance.StartNewDay();
+                    }
+                }
+            }
+        );
     }
 
-    private IEnumerator InitializePlayerMotorThenLock()
-    {
-        CachePlayerReferences();
-
-        if (playerMovementScript != null && !playerMovementScript.enabled)
-            playerMovementScript.enabled = true;
-
-        if (playerCharacterController != null)
-            playerCharacterController.enabled = true;
-
-        yield return null;
-
-        playerMotorInitialized = true;
-        SetPlayerMovement(false);
-    }
-
-    private void StartRadioBroadcast()
-    {
-        int currentDayToPlay = 1;
-        if (InteractableRandomChance.Instance != null)
-            currentDayToPlay = Mathf.Max(1, InteractableRandomChance.Instance.CurrentDay);
-
-        if (WaveRadioSystem.Instance != null)
-            WaveRadioSystem.Instance.OnWaveCompleted(currentDayToPlay);
-        else
-            OnRadioFinished();
-    }
-
-    private void SwitchToPlayerAndSpawn()
-    {
-        SetCursorState(false);
-
-        if (radioCamera != null) radioCamera.Priority = 10;
-        if (playerCamera != null) playerCamera.Priority = 20;
-
-        if (radioCanvas != null) radioCanvas.SetActive(false);
-
-        if (playerCanvas != null)
-        {
-            playerCanvas.SetActive(true);
-            CanvasGroup group = playerCanvas.GetComponent<CanvasGroup>();
-            if (group != null) group.alpha = 0f;
-        }
-
-        ResetPlayerPosition();
-    }
-
-    private void CompletePlayerHandoff(bool isStartingGame)
-    {
-        Time.timeScale = 1f;
-        StartCoroutine(FadeInPlayerCanvasRoutine());
-        SetPlayerMovement(true);
-
-        if (InteractableRandomChance.Instance == null)
-            return;
-
-        if (isStartingGame && isFirstGameLaunch)
-        {
-            InteractableRandomChance.Instance.StartNewDay();
-            isFirstGameLaunch = false;
-        }
-        else if (!isStartingGame)
-        {
-            InteractableRandomChance.Instance.StartNewDay();
-        }
-    }
-
-    private void CachePlayerReferences()
-    {
-        if (playerObject != null)
-            return;
-
-        if (playerMovementScript != null)
-            playerObject = playerMovementScript.gameObject;
-        else
-            playerObject = GameObject.FindWithTag("Player");
-
-        if (playerObject == null)
-            return;
-
-        playerCharacterController = playerObject.GetComponent<CharacterController>();
-        playerInput = playerObject.GetComponent<PlayerInput>();
-        playerInputs = playerObject.GetComponent<StarterAssetsInputs>();
-        firstPersonController = playerObject.GetComponent<FirstPersonController>();
-
-        if (playerMovementScript == null && firstPersonController != null)
-            playerMovementScript = firstPersonController;
-    }
-
+    // Karakterin pozisyonunu ve rotasyonunu Spawn Point'e sabitleyen güvenli metot
     private void ResetPlayerPosition()
     {
-        CachePlayerReferences();
+        if (playerSpawnPoint == null) return;
 
-        if (playerSpawnPoint == null || playerObject == null)
-            return;
-
-        if (firstPersonController != null)
+        // Sahnedeki player objesini buluyoruz (Etiketi "Player" olmalı veya tag ile bulabiliriz)
+        GameObject playerObj = GameObject.FindWithTag("Player");
+        if (playerObj != null)
         {
-            firstPersonController.SnapToSpawn(playerSpawnPoint.position, playerSpawnPoint.rotation);
-            return;
+            // Eğer karakterde CharacterController varsa doğrudan transform değiştirmek hata verebilir, önce kapatalım
+            CharacterController cc = playerObj.GetComponent<CharacterController>();
+            if (cc != null) cc.enabled = false;
+
+            playerObj.transform.position = playerSpawnPoint.position;
+            playerObj.transform.rotation = playerSpawnPoint.rotation;
+
+            if (cc != null) cc.enabled = true;
         }
-
-        bool wasEnabled = playerCharacterController != null && playerCharacterController.enabled;
-        if (playerCharacterController != null)
-            playerCharacterController.enabled = false;
-
-        playerObject.transform.SetPositionAndRotation(playerSpawnPoint.position, playerSpawnPoint.rotation);
-        Physics.SyncTransforms();
-
-        if (playerCharacterController != null)
-            playerCharacterController.enabled = wasEnabled;
     }
 
+    // Karakterin hareketini açıp kapatan yardımcı metot
     private void SetPlayerMovement(bool canMove)
     {
-        CachePlayerReferences();
-
-        if (playerInputs != null)
+        if (playerMovementScript != null)
         {
-            playerInputs.MoveInput(Vector2.zero);
-            playerInputs.LookInput(Vector2.zero);
-            playerInputs.JumpInput(false);
-            playerInputs.SprintInput(false);
-            playerInputs.cursorInputForLook = canMove;
-            playerInputs.cursorLocked = canMove;
-        }
-
-        if (playerInput != null)
-        {
-            playerInput.enabled = canMove;
-            if (canMove)
-                playerInput.ActivateInput();
-            else
-                playerInput.DeactivateInput();
-        }
-
-        if (playerMovementScript != null && playerMotorInitialized)
             playerMovementScript.enabled = canMove;
-
-        if (canMove && playerCharacterController != null)
-            playerCharacterController.enabled = true;
+        }
     }
 
     // Player Canvas'ın gecikmeli ve yumuşak bir şekilde netleşmesini sağlayan rutin
@@ -282,113 +209,74 @@ public class DayManager : MonoBehaviour
 
         public void ShowDaySummary()
     {
-        SetPlayerMovement(false);
+        Time.timeScale = 0f;
+        SetPlayerMovement(false); // Özet ekranında da hareket kilitlensin
 
-        if (ScreenFader.Instance == null)
-        {
-            OpenSummaryScreen();
-            return;
-        }
+        ScreenFader.Transition(
+            onHalfWay: () =>
+            {
+                if (playerCanvas != null)
+                {
+                    CanvasGroup group = playerCanvas.GetComponent<CanvasGroup>();
+                    if (group != null) group.alpha = 0f;
+                    playerCanvas.SetActive(false);
+                }
 
-        ScreenFader.Instance.FadeTransition(
-            onHalfWay: OpenSummaryScreen
+                if (summaryPanel != null)
+                {
+                    summaryPanel.SetActive(true);
+                }
+
+                // İŞTE EKSİK OLAN VE HER ŞEYİ DÜZELTEN SİHİRLİ SATIR:
+                if (SummaryPanelManager.Instance != null)
+                {
+                    // Eğer gün sayısını InteractableRandomChance'den alıyorsan turu da eşitler:
+                    if (InteractableRandomChance.Instance != null)
+                    {
+                        SummaryPanelManager.Instance.currentRound = InteractableRandomChance.Instance.CurrentDay;
+                    }
+
+                    SummaryPanelManager.Instance.ShowSummary();
+                }
+
+                SetCursorState(true);
+            }
         );
     }
 
-    private void OpenSummaryScreen()
+        public void OnSummaryContinuePressed()
     {
-        if (playerCanvas != null)
-        {
-            CanvasGroup group = playerCanvas.GetComponent<CanvasGroup>();
-            if (group != null) group.alpha = 0f;
-            playerCanvas.SetActive(false);
-        }
+        ScreenFader.Transition(
+            onHalfWay: () =>
+            {
+                if (summaryPanel != null) summaryPanel.SetActive(false);
 
-        if (radioCanvas != null)
-            radioCanvas.SetActive(false);
+                // Summary panellerini de sıfırla/kapat:
+                if (SummaryPanelManager.Instance != null)
+                {
+                    SummaryPanelManager.Instance.ClosePanels();
+                }
 
-        if (marketPanel != null)
-            marketPanel.SetActive(false);
+                if (marketPanel != null) marketPanel.SetActive(true);
 
-        if (summaryPanel != null)
-            summaryPanel.SetActive(true);
-
-        if (SummaryPanelManager.Instance != null)
-        {
-            if (InteractableRandomChance.Instance != null)
-                SummaryPanelManager.Instance.currentRound = InteractableRandomChance.Instance.CurrentDay;
-
-            SummaryPanelManager.Instance.ShowSummary();
-        }
-
-        Time.timeScale = 0f;
-        SetCursorState(true);
-    }
-
-    public void OnSummaryContinuePressed()
-    {
-        if (isTransitioningToMarket)
-            return;
-
-        isTransitioningToMarket = true;
-
-        if (ScreenFader.Instance == null)
-        {
-            OpenMarketScreen();
-            return;
-        }
-
-        ScreenFader.Instance.FadeTransition(
-            onHalfWay: OpenMarketScreen,
-            onComplete: () => isTransitioningToMarket = false
+                SetCursorState(true);
+            }
         );
-    }
-
-    private void OpenMarketScreen()
-    {
-        if (summaryPanel != null)
-            summaryPanel.SetActive(false);
-
-        if (SummaryPanelManager.Instance != null)
-            SummaryPanelManager.Instance.ClosePanels(false);
-
-        if (marketPanel != null)
-            marketPanel.SetActive(true);
-
-        Time.timeScale = 0f;
-        SetCursorState(true);
     }
 
     public void OnMarketContinuePressed()
     {
-        isTransitioningToMarket = false;
-        SetupRadioPresentation();
-        SetPlayerMovement(false);
+        SetupRadioCameraInitially();
 
-        if (marketPanel != null)
-            marketPanel.SetActive(false);
-
-        if (summaryPanel != null)
-            summaryPanel.SetActive(false);
-
-        if (SummaryPanelManager.Instance != null)
-        {
-            SummaryPanelManager.Instance.ClosePanels(false);
-            SummaryPanelManager.Instance.PrepareForNewRound();
-        }
+        if (marketPanel != null) marketPanel.SetActive(false);
 
         if (InteractableRandomChance.Instance != null)
+        {
             InteractableRandomChance.Instance.AdvanceToNextDay();
-
-        if (ItemEffectsManager.Instance != null)
-            ItemEffectsManager.Instance.LoadAllItemEffects();
+        }
 
         Time.timeScale = 1f;
-
-        if (gameSequenceRoutine != null)
-            StopCoroutine(gameSequenceRoutine);
-
-        gameSequenceRoutine = StartCoroutine(GameSequenceRoutine(false));
+        StartCoroutine(GameSequenceRoutine(false));
     }
 
     private void SetCursorState(bool isVisible)

@@ -16,4 +16,5 @@ MonoBehaviour:
   taskDescription: Secure the television
   requiresItem: 0
   requiredItemName: 
+  isElectrical: 1
   interactionSound: {fileID: 0}

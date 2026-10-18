@@ -97,63 +97,17 @@ namespace StarterAssets
 
 		private void Start()
 		{
-			EnsureInitialized();
+			_controller = GetComponent<CharacterController>();
+			_input = GetComponent<StarterAssetsInputs>();
+#if ENABLE_INPUT_SYSTEM
+			_playerInput = GetComponent<PlayerInput>();
+#else
+			Debug.LogError( "Starter Assets package is missing dependencies. Please use Tools/Starter Assets/Reinstall Dependencies to fix it");
+#endif
+
+			// reset our timeouts on start
 			_jumpTimeoutDelta = JumpTimeout;
 			_fallTimeoutDelta = FallTimeout;
-		}
-
-		private void OnEnable()
-		{
-			EnsureInitialized();
-		}
-
-		private void EnsureInitialized()
-		{
-			if (_controller == null)
-				_controller = GetComponent<CharacterController>();
-
-			if (_input == null)
-				_input = GetComponent<StarterAssetsInputs>();
-
-#if ENABLE_INPUT_SYSTEM
-			if (_playerInput == null)
-				_playerInput = GetComponent<PlayerInput>();
-#endif
-		}
-
-		/// <summary>
-		/// CharacterController açıkken transform yazmak kaydırır; spawn için CC kapatılır, bakış ve düşme hızı sıfırlanır.
-		/// </summary>
-		public void SnapToSpawn(Vector3 position, Quaternion rotation)
-		{
-			EnsureInitialized();
-
-			bool wasControllerEnabled = _controller != null && _controller.enabled;
-			if (_controller != null)
-				_controller.enabled = false;
-
-			transform.SetPositionAndRotation(position, rotation);
-
-			_speed = 0f;
-			_rotationVelocity = 0f;
-			_verticalVelocity = -2f;
-			_cinemachineTargetPitch = 0f;
-
-			if (CinemachineCameraTarget != null)
-				CinemachineCameraTarget.transform.localRotation = Quaternion.identity;
-
-			if (_input != null)
-			{
-				_input.MoveInput(Vector2.zero);
-				_input.LookInput(Vector2.zero);
-				_input.JumpInput(false);
-				_input.SprintInput(false);
-			}
-
-			Physics.SyncTransforms();
-
-			if (_controller != null)
-				_controller.enabled = wasControllerEnabled;
 		}
 
 		private void Update()

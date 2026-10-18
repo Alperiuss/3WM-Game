@@ -13,9 +13,17 @@ public class InteractableRandomChance : MonoBehaviour
     [SerializeField] private int baseActiveCount = 3; // 1. gün başlangıç eşya sayısı
 
     [Header("Timer Settings")]
-    [SerializeField] private float dayTimeLimit = 35f;
+    [Tooltip("1. günün süresi (saniye)")]
+    [SerializeField] private float baseDayTimeLimit = 35f;
+    [Tooltip("Her yeni güne eklenen birikimli süre (2. gün +5, 3. gün +10 ...)")]
+    [SerializeField] private float extraSecondsPerDay = 5f;
     private float currentTimer;
     private bool isTimerRunning = false;
+
+    [Header("Instant Earthquake")]
+    [Tooltip("Görevler bitince oyuncu sarı alanda bu kadar kalırsa deprem geri sayımı beklemeden başlar")]
+    [SerializeField] private float coverConfirmTime = 0.5f;
+    private float coverTimer = 0f;
 
     [Header("Earthquake Settings")]
     [SerializeField] private float earthquakeDuration = 5f;
@@ -38,11 +46,15 @@ public class InteractableRandomChance : MonoBehaviour
     [SerializeField] private GameObject survivalMessageUI;
     [SerializeField] private TextMeshProUGUI timerText;
 
+    [Header("Safe Zone Messages (survival phase)")]
+    [SerializeField] private string takeCoverMessage = "ALL TASKS DONE! GET INTO A YELLOW SAFE ZONE!";
+    [SerializeField] private string inCoverMessage = "YOU ARE IN COVER. STAY THERE!";
+    private TMP_Text survivalMessageText;
+
     private int remainingActiveCount = 0;
     private bool isEarthquakeActive = false;
     private bool isDayCompletedSuccessfully = false;
     public int CurrentDay => currentDay;
-    public bool WasDayCompletedSuccessfully => isDayCompletedSuccessfully;
 
     private void Awake()
     {
@@ -55,7 +67,10 @@ public class InteractableRandomChance : MonoBehaviour
     private void Start()
     {
         if (survivalMessageUI != null)
+        {
+            survivalMessageText = survivalMessageUI.GetComponentInChildren<TMP_Text>(true);
             survivalMessageUI.SetActive(false);
+        }
 
         if (stressSlider != null)
         {
@@ -63,7 +78,13 @@ public class InteractableRandomChance : MonoBehaviour
             stressSlider.gameObject.SetActive(false);
         }
 
-        // DİKKAT: Burada otomatik StartDay() ÇAĞIRMIYORUZ! 
+        // Yeni oyun her zaman başlangıç parasıyla ve boş marketle başlar
+        if (currentDay <= 1)
+        {
+            ResetRunForNewGame();
+        }
+
+        // DİKKAT: Burada otomatik StartDay() ÇAĞIRMIYORUZ!
         // Günü başlatma yetkisini tamamen DayManager ve radyo akışına bıraktık.
     }
 
@@ -71,16 +92,21 @@ public class InteractableRandomChance : MonoBehaviour
     {
         if (!isTimerRunning) return;
 
+        // Görevler bitti: oyuncu sarı alana girdiği an deprem geri sayımı beklemeden başlar
+        if (isDayCompletedSuccessfully && UpdateCoverCheck())
+        {
+            BeginEarthquake();
+            return;
+        }
+
         if (currentTimer > 0f)
         {
             currentTimer -= Time.deltaTime;
 
             if (isStressActive)
             {
-                float panicMultiplier = ItemEffectsManager.Instance != null
-                    ? ItemEffectsManager.Instance.panicRateMultiplier
-                    : 1f;
-                float currentFillRate = (baseStressFillRate + (activeNoiseMakersCount * noiseMakerPenaltyRate)) * panicMultiplier;
+                float currentFillRate = (baseStressFillRate + (activeNoiseMakersCount * noiseMakerPenaltyRate))
+                                        * ItemEffectsManager.StressRateMultiplier; // Stres İlacı: %10 yavaş
                 currentStress += currentFillRate * Time.deltaTime;
                 currentStress = Mathf.Clamp(currentStress, 0f, maxStress);
 
@@ -106,10 +132,48 @@ public class InteractableRandomChance : MonoBehaviour
             if (currentTimer <= 0f)
             {
                 currentTimer = 0f;
-                isTimerRunning = false;
-                StartCoroutine(TriggerEarthquakeRoutine());
+                BeginEarthquake();
             }
         }
+    }
+
+    /// <summary>
+    /// Güvenli alan mesajını günceller; oyuncu yeterince uzun süre sarı alandaysa true döner.
+    /// Sahnede SafeZoneManager yoksa görevler biter bitmez true döner.
+    /// </summary>
+    private bool UpdateCoverCheck()
+    {
+        bool inCover = SafeZoneManager.Instance == null || SafeZoneManager.Instance.IsPlayerInsideAnyZone();
+
+        if (survivalMessageText != null && SafeZoneManager.Instance != null)
+        {
+            string wanted = inCover ? inCoverMessage : takeCoverMessage;
+            if (survivalMessageText.text != wanted) survivalMessageText.text = wanted;
+        }
+
+        coverTimer = inCover ? coverTimer + Time.deltaTime : 0f;
+        return inCover && coverTimer >= coverConfirmTime;
+    }
+
+    private void BeginEarthquake()
+    {
+        if (isEarthquakeActive) return;
+
+        isTimerRunning = false;
+        StartCoroutine(TriggerEarthquakeRoutine());
+    }
+
+    /// <summary>Günün süresi: temel süre + her gün birikimli ek süre + Ev Geliştirmesi bonusu.</summary>
+    private float GetDayTimeLimit(int day)
+    {
+        return baseDayTimeLimit + Mathf.Max(0, day - 1) * extraSecondsPerDay + ItemEffectsManager.BonusDaySeconds;
+    }
+
+    private void ResetRunForNewGame()
+    {
+        GameOverScreen.ResetRunProgress();
+        if (CurrencyManager.Instance != null) CurrencyManager.Instance.ResetToStartingFame();
+        if (ItemEffectsManager.Instance != null) ItemEffectsManager.Instance.Refresh();
     }
 
     // Günü resmi olarak başlatan ana metot
@@ -119,6 +183,12 @@ public class InteractableRandomChance : MonoBehaviour
 
         if (survivalMessageUI != null)
             survivalMessageUI.SetActive(false);
+
+        if (SafeZoneManager.Instance != null)
+            SafeZoneManager.Instance.HideZones();
+
+        ItemLocatorMarker.Hide();
+        coverTimer = 0f;
 
         Debug.Log("--- GÜN " + currentDay + " BAŞLADI ---");
 
@@ -142,7 +212,17 @@ public class InteractableRandomChance : MonoBehaviour
             stressSlider.value = 0f;
         }
 
-        if (allInteractable == null || allInteractable.Count == 0)
+        // Inspector listesinde boş (silinmiş) referanslar olabilir; onları ayıkla
+        List<InteractableObject> shuffledList = new List<InteractableObject>();
+        if (allInteractable != null)
+        {
+            foreach (var obj in allInteractable)
+            {
+                if (obj != null) shuffledList.Add(obj);
+            }
+        }
+
+        if (shuffledList.Count == 0)
         {
             Debug.LogWarning(">>> HATA: allInteractable listesi boş!");
             return;
@@ -151,13 +231,11 @@ public class InteractableRandomChance : MonoBehaviour
         if (timerText != null)
             timerText.gameObject.SetActive(true);
 
-        foreach (var obj in allInteractable)
+        foreach (var obj in shuffledList)
         {
-            if (obj != null)
-                obj.SetInteractableState(false);
+            obj.SetInteractableState(false);
         }
 
-        List<InteractableObject> shuffledList = new List<InteractableObject>(allInteractable);
         for (int i = 0; i < shuffledList.Count; i++)
         {
             InteractableObject temp = shuffledList[i];
@@ -176,9 +254,6 @@ public class InteractableRandomChance : MonoBehaviour
 
         for (int i = 0; i < countToActivate; i++)
         {
-            if (shuffledList[i] == null)
-                continue;
-
             shuffledList[i].SetInteractableState(true);
 
             if (shuffledList[i].Data != null)
@@ -197,21 +272,22 @@ public class InteractableRandomChance : MonoBehaviour
             TaskUIManager.Instance.PopulateTasks(currentDayTaskDescriptions);
         }
 
-        currentTimer = dayTimeLimit;
-        isTimerRunning = true;
-        if(AudioManager.Instance != null)
+        // Alarm: bugünün tehlikelerinden birinin yeri ekranda işaretlenir
+        if (ItemEffectsManager.AlarmActive && countToActivate > 0)
         {
-            AudioManager.Instance.PlaySFX("Siren");
+            InteractableObject marked = shuffledList[Random.Range(0, countToActivate)];
+            ItemLocatorMarker.Show(marked, timerText != null ? timerText.font : null);
         }
+
+        currentTimer = GetDayTimeLimit(currentDay);
+        isTimerRunning = true;
     }
 
     // Gün atlatma fonksiyonu (DayManager burayı çağıracak)
     public void AdvanceToNextDay()
     {
         currentDay++;
-        isEarthquakeActive = false;
-        isTimerRunning = false;
-        isDayCompletedSuccessfully = false;
+        StartNewDay();
     }
 
     public void NotifyObjectResolved(string taskDescription, InteractableData resolvedData)
@@ -245,6 +321,13 @@ public class InteractableRandomChance : MonoBehaviour
 
         if (survivalMessageUI != null)
             survivalMessageUI.SetActive(true);
+
+        if (survivalMessageText != null)
+            survivalMessageText.text = takeCoverMessage;
+
+        // Hayat üçgeni: 2 adet sarı güvenli alan belirir
+        if (SafeZoneManager.Instance != null)
+            SafeZoneManager.Instance.ShowZones();
     }
 
     private IEnumerator StressOverloadDeathRoutine()
@@ -257,19 +340,17 @@ public class InteractableRandomChance : MonoBehaviour
         }
 
         Debug.Log(">>> ÖLÜM: Stres seviyesi tavan yaptı!");
+        if (DayManager.Instance != null) DayManager.Instance.SetPlayerControl(false);
         yield return new WaitForSeconds(1.5f);
 
-        PlayerDeath();
+        PlayerDeath(DeathReason.Stress);
     }
 
     private IEnumerator TriggerEarthquakeRoutine()
     {
-        if(AudioManager.Instance != null && AudioManager.Instance.IsPlayingSFX("Siren"))
-        {
-            AudioManager.Instance.StopSFX("Siren");
-        }
         isEarthquakeActive = true;
         isStressActive = false;
+        ItemLocatorMarker.Hide();
 
         if (timerText != null)
         {
@@ -278,8 +359,15 @@ public class InteractableRandomChance : MonoBehaviour
         }
 
         float currentMagnitude = baseEarthquakeMagnitude + (currentDay * magnitudeMultiplierPerDay);
-        if (ItemEffectsManager.Instance != null && ItemEffectsManager.Instance.hasHouseUpgrade)
-            currentMagnitude *= 0.7f;
+
+        // Geri sayım bitti: görevler tamam VE oyuncu sarı alanın içindeyse kurtulur.
+        // (Sahnede SafeZoneManager yoksa eski kural geçerli: görevler bittiyse kurtulur.)
+        bool inCover = SafeZoneManager.Instance == null || SafeZoneManager.Instance.IsPlayerInsideAnyZone();
+        bool survives = isDayCompletedSuccessfully && inCover;
+
+        // Deprem anında çök-kapan-tutun: oyuncu yerinde kalır
+        if (DayManager.Instance != null) DayManager.Instance.SetPlayerControl(false);
+        if (survivalMessageUI != null) survivalMessageUI.SetActive(false);
 
         if (CameraShake.Instance != null)
         {
@@ -290,9 +378,12 @@ public class InteractableRandomChance : MonoBehaviour
             yield return new WaitForSeconds(earthquakeDuration);
         }
 
-        if (!isDayCompletedSuccessfully)
+        if (SafeZoneManager.Instance != null)
+            SafeZoneManager.Instance.HideZones();
+
+        if (!survives)
         {
-            PlayerDeath();
+            PlayerDeath(DeathReason.NoCover);
         }
         else
         {
@@ -307,9 +398,27 @@ public class InteractableRandomChance : MonoBehaviour
         }
     }
 
-    private void PlayerDeath()
+    private void PlayerDeath(DeathReason reason)
     {
-        Debug.Log(">>> GAME OVER: Ölüm ekranı açılıyor.");
-        DayManager.Instance.ShowDaySummary();
+        Debug.Log(">>> GAME OVER (" + reason + "): Ölüm ekranı açılıyor.");
+        isTimerRunning = false;
+        isStressActive = false;
+        ItemLocatorMarker.Hide();
+
+        if (SafeZoneManager.Instance != null)
+            SafeZoneManager.Instance.HideZones();
+        if (survivalMessageUI != null)
+            survivalMessageUI.SetActive(false);
+        if (DayManager.Instance != null)
+            DayManager.Instance.SetPlayerControl(false);
+
+        if (GameOverScreen.Instance != null)
+        {
+            GameOverScreen.Instance.Show(reason, !isDayCompletedSuccessfully, currentDay);
+        }
+        else
+        {
+            Debug.LogWarning("[InteractableRandomChance] Sahnede GameOverScreen yok, ölüm ekranı gösterilemedi.");
+        }
     }
 }

@@ -16,4 +16,5 @@ MonoBehaviour:
   taskDescription: 'Fix the electrical leak [Requires: Electrical Tape]'
   requiresItem: 1
   requiredItemName: 
+  isElectrical: 1
   interactionSound: {fileID: 0}
