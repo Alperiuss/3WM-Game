@@ -68,14 +68,27 @@ public class PlayerRaycast : MonoBehaviour
         // Eğer geçerli bir objeye bakıyorsak
         if (currentTarget != null)
         {
-            // E tuşuna basılıyor mu? (Basılı tutma kontrolü)
+            // E tuşuna basılıyor mu? (Basılı tutma)
             if (interactActionReference != null && interactActionReference.action.IsPressed())
             {
-                currentHoldTime += Time.deltaTime;
-
+                // =============================================================
+                // MATKAP / TAMİR SESİ: Zaten çalmıyorsa başlat (Üst üste binmez!)
+                // =============================================================
+                if (AudioManager.Instance != null && !AudioManager.Instance.IsPlayingSFX("drill"))
+                {
+                    AudioManager.Instance.PlaySFX("drill");
+                }
+                // Hızlı Tamir Kiti çarpanı
+                float speedMultiplier = (ItemEffectsManager.Instance != null) ? ItemEffectsManager.Instance.repairSpeedMultiplier : 1f;
+                currentHoldTime += Time.deltaTime * speedMultiplier;
                 // Süre dolduysa etkileşimi gerçekleştir
                 if (currentHoldTime >= currentTarget.RequiredHoldTime)
                 {
+                    // Tamir bittiğinde matkap sesini HEMEN DURDUR
+                    if (AudioManager.Instance != null)
+                    {
+                        AudioManager.Instance.StopSFX("drill");
+                    }
                     currentTarget.Interact();
                     currentHoldTime = 0f;
                     currentTarget = null;
@@ -83,12 +96,21 @@ public class PlayerRaycast : MonoBehaviour
             }
             else
             {
-                // Tuş bırakıldıysa sayacı sıfırla
+                // Oyuncu parmağını tuştan çekerse sesi DURDUR
+                if (AudioManager.Instance != null && AudioManager.Instance.IsPlayingSFX("drill"))
+                {
+                    AudioManager.Instance.StopSFX("drill");
+                }
                 currentHoldTime = 0f;
             }
         }
         else
         {
+            // Objenin üzerinden imleci çekerse sesi DURDUR
+            if (AudioManager.Instance != null && AudioManager.Instance.IsPlayingSFX("drill"))
+            {
+                AudioManager.Instance.StopSFX("drill");
+            }
             currentHoldTime = 0f;
         }
 
