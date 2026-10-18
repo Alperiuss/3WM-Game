@@ -98,6 +98,10 @@ public class WaveRadioSystem : MonoBehaviour
 
         // ⭐ EKRAN AÇILIRKEN OYUNCU KAÇIRMASIN DİYE MİNİK BİR GECİKME (Yarım saniye)
         yield return new WaitForSecondsRealtime(0.5f);
+        if (AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX("Alper");
+        }
 
         foreach (string message in broadcast.messages)
         {
@@ -133,6 +137,10 @@ public class WaveRadioSystem : MonoBehaviour
                 waitTimer -= Time.unscaledDeltaTime;
                 yield return null;
             }
+        }
+        if (AudioManager.Instance != null && AudioManager.Instance.IsPlayingSFX("Alper"))
+        {
+            AudioManager.Instance.StopSFX("Alper");
         }
 
         radioText.text = "";

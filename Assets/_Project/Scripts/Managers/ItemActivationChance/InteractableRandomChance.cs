@@ -199,6 +199,10 @@ public class InteractableRandomChance : MonoBehaviour
 
         currentTimer = dayTimeLimit;
         isTimerRunning = true;
+        if(AudioManager.Instance != null)
+        {
+            AudioManager.Instance.PlaySFX("Siren");
+        }
     }
 
     // Gün atlatma fonksiyonu (DayManager burayı çağıracak)
@@ -260,6 +264,10 @@ public class InteractableRandomChance : MonoBehaviour
 
     private IEnumerator TriggerEarthquakeRoutine()
     {
+        if(AudioManager.Instance != null && AudioManager.Instance.IsPlayingSFX("Siren"))
+        {
+            AudioManager.Instance.StopSFX("Siren");
+        }
         isEarthquakeActive = true;
         isStressActive = false;
 
@@ -302,5 +310,6 @@ public class InteractableRandomChance : MonoBehaviour
     private void PlayerDeath()
     {
         Debug.Log(">>> GAME OVER: Ölüm ekranı açılıyor.");
+        DayManager.Instance.ShowDaySummary();
     }
 }
