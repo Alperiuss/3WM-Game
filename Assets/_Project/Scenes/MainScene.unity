@@ -1971,6 +1971,10 @@ PrefabInstance:
       propertyPath: sounds.Array.data[6].name
       value: Earthquake
       objectReference: {fileID: 0}
+    - target: {fileID: 5805211403118040549, guid: 4e2a8a3d4dcaba14c95c56b8809fe32d, type: 3}
+      propertyPath: sounds.Array.data[7].volume
+      value: 0.5
+      objectReference: {fileID: 0}
     - target: {fileID: 7078332968371826297, guid: 4e2a8a3d4dcaba14c95c56b8809fe32d, type: 3}
       propertyPath: noButton
       value: 
