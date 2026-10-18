@@ -80,6 +80,10 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
                 SaveData();
                 UpdateCardUI();
                 Debug.Log($"[PURCHASE SUCCESS]: {itemName} satın alındı!");
+                if (AudioManager.Instance != null)
+                {
+                    AudioManager.Instance.PlaySFX("Coins");
+                }
             }
         }
     }
