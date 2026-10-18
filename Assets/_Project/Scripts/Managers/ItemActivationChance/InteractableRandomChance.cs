@@ -24,6 +24,14 @@ public class InteractableRandomChance : MonoBehaviour
     [Range(0f, 1f)] [SerializeField] private float sirenVolume = 0.7f;
     [Range(0f, 1f)] [SerializeField] private float earthquakeVolume = 1f;
 
+    [Header("Final Day")]
+    [Tooltip("Son gün; başarılı geçilirse market yerine oyun bitiş (tebrik) ekranı açılır")]
+    [SerializeField] private int finalDay = 4;
+    [Tooltip("Son günün normal süresine eklenen ekstra süre (saniye)")]
+    [SerializeField] private float finalDayBonusSeconds = 15f;
+    [Tooltip("Son günde aktif olacak görev sayısı")]
+    [SerializeField] private int finalDayTaskCount = 9;
+
     [Header("First Day Guide")]
     [Tooltip("1. günde bütün görev eşyalarının yeri ekranda işaretlensin (yeni oyuncular evi tanısın diye)")]
     [SerializeField] private bool markAllTasksOnFirstDay = true;
@@ -182,7 +190,9 @@ public class InteractableRandomChance : MonoBehaviour
     /// <summary>Günün süresi: temel süre + her gün birikimli ek süre + Ev Geliştirmesi bonusu.</summary>
     private float GetDayTimeLimit(int day)
     {
-        return baseDayTimeLimit + Mathf.Max(0, day - 1) * extraSecondsPerDay + ItemEffectsManager.BonusDaySeconds;
+        float time = baseDayTimeLimit + Mathf.Max(0, day - 1) * extraSecondsPerDay + ItemEffectsManager.BonusDaySeconds;
+        if (day >= finalDay) time += finalDayBonusSeconds;
+        return time;
     }
 
     private void ResetRunForNewGame()
@@ -195,7 +205,11 @@ public class InteractableRandomChance : MonoBehaviour
     // Günü resmi olarak başlatan ana metot
     public void StartNewDay()
     {
-        if (isEarthquakeActive) return;
+        if (isEarthquakeActive)
+        {
+            Debug.LogWarning("[InteractableRandomChance] Deprem sürerken yeni gün başlatılamaz.");
+            return;
+        }
 
         if (survivalMessageUI != null)
             survivalMessageUI.SetActive(false);
@@ -209,24 +223,27 @@ public class InteractableRandomChance : MonoBehaviour
 
         Debug.Log("--- GÜN " + currentDay + " BAŞLADI ---");
 
-        if (currentDay > 4)
+        if (currentDay > finalDay)
         {
-            Debug.Log("TEBRİKLER! 4 GÜNÜ DE ATLATIP OYUNU KAZANDIN!");
-            if (timerText != null) timerText.text = "GLORY!";
+            // Normal akışta buraya gelinmez: son gün kazanılınca bitiş ekranı açılır
+            ShowVictory();
             return;
         }
 
+        // Önceki günden kalan her durumu sıfırla
         isDayCompletedSuccessfully = false;
         activeNoiseMakersCount = 0;
         currentStress = 0f;
+        currentTimer = 0f;
 
         // Stres SADECE 2. gün ve sonrasında aktif olur (1. günden kesinlikle açılmaz)
         isStressActive = (currentDay >= 2);
 
         if (stressSlider != null)
         {
-            stressSlider.gameObject.SetActive(isStressActive);
+            stressSlider.maxValue = maxStress;
             stressSlider.value = 0f;
+            stressSlider.gameObject.SetActive(isStressActive);
         }
 
         // Inspector listesinde boş (silinmiş) referanslar olabilir; onları ayıkla
@@ -262,7 +279,9 @@ public class InteractableRandomChance : MonoBehaviour
         }
 
         // HATA ÇÖZÜMÜ: Eşya sayısını her gün sabit bir formülle artırıyoruz (Sürekli üstüne ekleme hatası bitti)
-        int targetActiveCount = baseActiveCount + ((currentDay - 1) * 2);
+        int targetActiveCount = currentDay >= finalDay ? finalDayTaskCount : baseActiveCount + ((currentDay - 1) * 2);
+        if (targetActiveCount > shuffledList.Count)
+            Debug.LogWarning($"[InteractableRandomChance] Gün {currentDay} için {targetActiveCount} görev istendi ama sahnede {shuffledList.Count} eşya var.");
         int countToActivate = Mathf.Min(targetActiveCount, shuffledList.Count);
 
         remainingActiveCount = countToActivate;
@@ -305,12 +324,18 @@ public class InteractableRandomChance : MonoBehaviour
         isTimerRunning = true;
     }
 
-    // Gün atlatma fonksiyonu (DayManager burayı çağıracak)
+    /// <summary>
+    /// Marketten çıkınca gün numarasını artırır. Gün burada BAŞLAMAZ: DayManager radyo yayını bittikten sonra
+    /// StartNewDay'i bir kez çağırır (önceden gün radyo sırasında da başladığı için sayaç ve stres arkada akıyordu).
+    /// </summary>
     public void AdvanceToNextDay()
     {
         currentDay++;
-        StartNewDay();
+        isTimerRunning = false;
+        isStressActive = false;
     }
+
+    public bool IsFinalDay => currentDay >= finalDay;
 
     public void NotifyObjectResolved(string taskDescription, InteractableData resolvedData)
     {
@@ -418,10 +443,39 @@ public class InteractableRandomChance : MonoBehaviour
             isEarthquakeActive = false;
             yield return new WaitForSeconds(1.5f);
 
-            if (DayManager.Instance != null)
+            if (IsFinalDay)
+            {
+                // Son gün: market yok, oyun bitiş (tebrik) ekranı
+                ShowVictory();
+            }
+            else if (DayManager.Instance != null)
             {
                 DayManager.Instance.ShowDaySummary();
             }
+        }
+    }
+
+    private void ShowVictory()
+    {
+        Debug.Log(">>> TEBRİKLER! Bütün günler atlatıldı, oyun bitti.");
+        isTimerRunning = false;
+        isStressActive = false;
+        ItemLocatorMarker.Hide();
+        GameSfx.StopAllLoops(0.6f);
+        SilenceAllNoise();
+
+        if (survivalMessageUI != null) survivalMessageUI.SetActive(false);
+        if (stressSlider != null) stressSlider.gameObject.SetActive(false);
+        if (DayManager.Instance != null) DayManager.Instance.SetPlayerControl(false);
+
+        if (GameOverScreen.Instance != null)
+        {
+            GameOverScreen.Instance.ShowVictory(Mathf.Min(currentDay, finalDay));
+        }
+        else
+        {
+            Debug.LogWarning("[InteractableRandomChance] Sahnede GameOverScreen yok, bitiş ekranı gösterilemedi.");
+            if (timerText != null) timerText.text = "GLORY!";
         }
     }
 

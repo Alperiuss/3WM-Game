@@ -23,6 +23,7 @@ public class GameOverScreen : MonoBehaviour
     [Header("Art (same as the summary / menu)")]
     [SerializeField] private Sprite backgroundSprite;   // Frame_4_7 (mavi sismik desen)
     [SerializeField] private Sprite clipboardSprite;    // sekreterlik (MISSION UNSUCCESFUL)
+    [SerializeField] private Sprite victoryClipboardSprite; // sekreterlik_1 (MISSION SUCCESFUL)
     [SerializeField] private Sprite buttonSprite;       // Frame_2_3
     [SerializeField] private TMP_FontAsset font;        // STaRTp2 SDF
 
@@ -39,6 +40,11 @@ public class GameOverScreen : MonoBehaviour
     [SerializeField] private string coverBody = "You weren't in a safe spot (life triangle)\nwhen the earthquake hit.";
     [TextArea(1, 3)]
     [SerializeField] private string unsecuredExtra = "Some hazards in the house were still unsecured.";
+
+    [Header("Victory Texts (English)")]
+    [SerializeField] private string victoryTitle = "CONGRATULATIONS!";
+    [TextArea(2, 5)]
+    [SerializeField] private string victoryBody = "You survived every earthquake and kept your family safe.\nYou secured your home, kept calm and took cover in time.\n\nYour home is NOT YET SAFE... but you are ready.";
 
     private GameObject canvasRoot;
     private CanvasGroup group;
@@ -62,8 +68,30 @@ public class GameOverScreen : MonoBehaviour
         if (shown) return;
         shown = true;
 
-        BuildUI(reason, tasksWereIncomplete, day);
+        string title = reason == DeathReason.Stress ? stressTitle : coverTitle;
+        string body = reason == DeathReason.Stress ? stressBody : coverBody;
+        if (reason == DeathReason.NoCover && tasksWereIncomplete && !string.IsNullOrEmpty(unsecuredExtra))
+            body += "\n\n" + unsecuredExtra;
 
+        BuildUI(clipboardSprite, "MISSION UNSUCCESFUL", new Color(0.85f, 0.05f, 0.05f, 1f),
+                title, new Color(0.08f, 0.08f, 0.1f, 1f), body, "SURVIVED DAYS: " + Mathf.Max(0, day - 1));
+        Open();
+    }
+
+    /// <summary>Son gün de atlatılınca açılan tebrik ekranı (market yerine). MAIN MENU ana menüye döner.</summary>
+    public void ShowVictory(int survivedDays)
+    {
+        if (shown) return;
+        shown = true;
+
+        BuildUI(victoryClipboardSprite, "MISSION SUCCESFUL", new Color(0.36f, 0.62f, 0.13f, 1f),
+                victoryTitle, new Color(0.13f, 0.45f, 0.12f, 1f), victoryBody, "SURVIVED DAYS: " + survivedDays + " / " + survivedDays);
+        if (AudioManager.Instance != null) AudioManager.Instance.PlaySFX("Coins");
+        Open();
+    }
+
+    private void Open()
+    {
         Time.timeScale = 0f;
         Cursor.visible = true;
         Cursor.lockState = CursorLockMode.None;
@@ -87,7 +115,8 @@ public class GameOverScreen : MonoBehaviour
         }
     }
 
-    private void BuildUI(DeathReason reason, bool tasksWereIncomplete, int day)
+    private void BuildUI(Sprite boardSprite, string fallbackHeader, Color headerColor,
+                         string title, Color titleColor, string body, string footer)
     {
         EnsureEventSystem();
 
@@ -116,8 +145,8 @@ public class GameOverScreen : MonoBehaviour
         }
 
         // Not defteri / klipsli pano
-        Image board = CreateImage("Clipboard", canvasRoot.transform, clipboardSprite,
-            clipboardSprite != null ? Color.white : new Color(0.85f, 0.82f, 0.74f, 1f));
+        Image board = CreateImage("Clipboard", canvasRoot.transform, boardSprite,
+            boardSprite != null ? Color.white : new Color(0.85f, 0.82f, 0.74f, 1f));
         board.preserveAspect = true;
         RectTransform br = board.rectTransform;
         br.anchorMin = br.anchorMax = new Vector2(0.5f, 0.5f);
@@ -125,25 +154,26 @@ public class GameOverScreen : MonoBehaviour
         br.sizeDelta = new Vector2(1000f, 823f); // 4558x3750 oranı
         br.anchoredPosition = new Vector2(0f, 10f);
 
-        if (clipboardSprite == null)
+        if (boardSprite == null)
         {
-            TMP_Text header = CreateText("Header", board.transform, "MISSION UNSUCCESFUL", 64, new Color(0.85f, 0.05f, 0.05f, 1f));
+            TMP_Text header = CreateText("Header", board.transform, fallbackHeader, 64, headerColor);
             Place(header.rectTransform, new Vector2(0f, 300f), new Vector2(900f, 90f));
         }
 
-        string title = reason == DeathReason.Stress ? stressTitle : coverTitle;
-        string body = reason == DeathReason.Stress ? stressBody : coverBody;
-        if (reason == DeathReason.NoCover && tasksWereIncomplete && !string.IsNullOrEmpty(unsecuredExtra))
-            body += "\n\n" + unsecuredExtra;
-
-        TMP_Text titleText = CreateText("Cause", board.transform, title, 54, new Color(0.08f, 0.08f, 0.1f, 1f));
+        TMP_Text titleText = CreateText("Title", board.transform, title, 54, titleColor);
+        titleText.enableAutoSizing = true;
+        titleText.fontSizeMin = 30f;
+        titleText.fontSizeMax = 54f;
         Place(titleText.rectTransform, new Vector2(0f, 120f), new Vector2(860f, 90f));
 
-        TMP_Text bodyText = CreateText("Reason", board.transform, body, 34, new Color(0.12f, 0.12f, 0.14f, 1f));
+        TMP_Text bodyText = CreateText("Body", board.transform, body, 34, new Color(0.12f, 0.12f, 0.14f, 1f));
         bodyText.alignment = TextAlignmentOptions.Top;
+        bodyText.enableAutoSizing = true;
+        bodyText.fontSizeMin = 20f;
+        bodyText.fontSizeMax = 34f;
         Place(bodyText.rectTransform, new Vector2(0f, -70f), new Vector2(820f, 260f));
 
-        TMP_Text dayText = CreateText("Day", board.transform, "SURVIVED DAYS: " + Mathf.Max(0, day - 1), 30, new Color(0.25f, 0.25f, 0.28f, 1f));
+        TMP_Text dayText = CreateText("Day", board.transform, footer, 30, new Color(0.25f, 0.25f, 0.28f, 1f));
         Place(dayText.rectTransform, new Vector2(0f, -280f), new Vector2(820f, 50f));
 
         // Sol altta ANA MENÜ butonu
