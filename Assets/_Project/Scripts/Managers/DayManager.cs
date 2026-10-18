@@ -196,7 +196,7 @@ public class DayManager : MonoBehaviour
         isRadioFinished = true;
     }
 
-    public void ShowDaySummary()
+        public void ShowDaySummary()
     {
         Time.timeScale = 0f;
         SetPlayerMovement(false); // Özet ekranında da hareket kilitlensin
@@ -216,17 +216,36 @@ public class DayManager : MonoBehaviour
                     summaryPanel.SetActive(true);
                 }
 
+                // İŞTE EKSİK OLAN VE HER ŞEYİ DÜZELTEN SİHİRLİ SATIR:
+                if (SummaryPanelManager.Instance != null)
+                {
+                    // Eğer gün sayısını InteractableRandomChance'den alıyorsan turu da eşitler:
+                    if (InteractableRandomChance.Instance != null)
+                    {
+                        SummaryPanelManager.Instance.currentRound = InteractableRandomChance.Instance.CurrentDay;
+                    }
+
+                    SummaryPanelManager.Instance.ShowSummary();
+                }
+
                 SetCursorState(true);
             }
         );
     }
 
-    public void OnSummaryContinuePressed()
+        public void OnSummaryContinuePressed()
     {
         ScreenFader.Instance.FadeTransition(
             onHalfWay: () =>
             {
                 if (summaryPanel != null) summaryPanel.SetActive(false);
+
+                // Summary panellerini de sıfırla/kapat:
+                if (SummaryPanelManager.Instance != null)
+                {
+                    SummaryPanelManager.Instance.ClosePanels();
+                }
+
                 if (marketPanel != null) marketPanel.SetActive(true);
 
                 SetCursorState(true);

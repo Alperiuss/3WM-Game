@@ -51,7 +51,7 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
     if (ConfirmationPanelMAnager.Instance != null)
     {
         // Inspector'dan girilen itemName ve itemDescription verilerini panele aktarır
-        ConfirmationPanelMAnager.Instance.OpenConfirmation(this, itemName, itemDescription, currentPrice);
+        ConfirmationPanelMAnager.Instance.OpenConfirmation(this, itemName, itemDescription);
     }
 }
 
@@ -121,7 +121,7 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
 
             if (priceText != null)
             {
-                priceText.text = (currentLevel >= maxLevel) ? "Completed" : $"{currentPrice} XP";
+                priceText.text = (currentLevel >= maxLevel) ? "Completed" : $"{currentPrice} ";
             }
         }
         else
