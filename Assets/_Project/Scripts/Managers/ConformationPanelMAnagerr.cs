@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
@@ -11,14 +12,14 @@ public class ConfirmationPanelMAnager : MonoBehaviour
 
     [Header("UI Text References")]
     [SerializeField] private TMP_Text titleText;
-    [SerializeField] private TMP_Text descriptionText; // AÇIKLAMA METNİ İÇİN YENİ REFERANS
-    [SerializeField] private TMP_Text priceText;       // İSTEĞE BAĞLI FİYAT METNİ
+    [SerializeField] private TMP_Text descriptionText;
 
     [Header("UI Buttons")]
     [SerializeField] private Button yesButton;
     [SerializeField] private Button noButton;
 
     private ItemCard pendingItemCard;
+    private Coroutine warningCoroutine;
 
     private void Awake()
     {
@@ -41,16 +42,47 @@ public class ConfirmationPanelMAnager : MonoBehaviour
         HidePanel();
     }
 
-    // Kart tıklandığında çalışan açılış metodu
-    public void OpenConfirmation(ItemCard card, string title, string description, int price = 0)
+    // 1. NORMAL ONAY EKRANI (Satın Alınsın mı?)
+    public void OpenConfirmation(ItemCard card, string title, string description)
     {
+        if (warningCoroutine != null) StopCoroutine(warningCoroutine);
+
         pendingItemCard = card;
 
         if (titleText != null) titleText.text = title;
         if (descriptionText != null) descriptionText.text = description;
-        if (priceText != null && price > 0) priceText.text = $"{price} Fame";
+
+        // Butonları görünür yap
+        if (yesButton != null) yesButton.gameObject.SetActive(true);
+        if (noButton != null) noButton.gameObject.SetActive(true);
 
         if (popupPanel != null) popupPanel.SetActive(true);
+    }
+
+    // 2. OTOMATİK KAPANAN UYARI EKRANI (YOU DONT HAVE ENOUGH XP!)
+    public void ShowWarning(string warningMessage, float duration = 2f)
+    {
+        if (warningCoroutine != null) StopCoroutine(warningCoroutine);
+
+        pendingItemCard = null;
+
+        if (titleText != null) titleText.text = warningMessage;
+        if (descriptionText != null) descriptionText.text = "";
+
+        // Uyarı mesajında YES / NO butonlarını gizle
+        if (yesButton != null) yesButton.gameObject.SetActive(false);
+        if (noButton != null) noButton.gameObject.SetActive(false);
+
+        if (popupPanel != null) popupPanel.SetActive(true);
+
+        // Belirtilen süre bittiğinde otomatik kapat
+        warningCoroutine = StartCoroutine(HideAfterDelay(duration));
+    }
+
+    private IEnumerator HideAfterDelay(float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        HidePanel();
     }
 
     private void OnYesClicked()
@@ -70,6 +102,8 @@ public class ConfirmationPanelMAnager : MonoBehaviour
 
     public void HidePanel()
     {
+        if (warningCoroutine != null) StopCoroutine(warningCoroutine);
+
         pendingItemCard = null;
         if (popupPanel != null) popupPanel.SetActive(false);
     }

@@ -29,10 +29,20 @@ public class TaskUIManager : MonoBehaviour
     {
         ClearTasks();
 
-        // Aynı açıklamaya sahip görevleri kendi içinde sayıyoruz (Örn: "{Stress Item}" kaç adet var?)
+        if (taskDescriptions == null || taskDescriptions.Count == 0)
+        {
+            Debug.LogWarning("[TaskUIManager] Görev listesi boş geldi!");
+            return;
+        }
+
+        // Aynı açıklamaya sahip görevleri sayıyoruz
         Dictionary<string, int> counts = new Dictionary<string, int>();
         foreach (var desc in taskDescriptions)
         {
+            // GÜVENLİK: Boş, null veya geçersiz string'leri atla (Devre dışı kalanlar burada elenir)
+            if (string.IsNullOrWhiteSpace(desc))
+                continue;
+
             if (counts.ContainsKey(desc))
                 counts[desc]++;
             else
@@ -48,12 +58,17 @@ public class TaskUIManager : MonoBehaviour
             taskTotalCounts[desc] = totalCount;
             taskCurrentCounts[desc] = 0;
 
+            if (taskItemPrefab == null || taskContainer == null)
+            {
+                Debug.LogError("[TaskUIManager] taskItemPrefab veya taskContainer atanmamış!");
+                continue;
+            }
+
             GameObject taskObj = Instantiate(taskItemPrefab, taskContainer);
             TextMeshProUGUI textComp = taskObj.GetComponentInChildren<TextMeshProUGUI>();
 
             if (textComp != null)
             {
-                // Eğer birden fazlaysa yanına sayaç koyuyoruz (Örn: "- {Stress Item} (0/2)")
                 if (totalCount > 1)
                 {
                     textComp.text = $"- {desc} (0/{totalCount})";
@@ -64,47 +79,80 @@ public class TaskUIManager : MonoBehaviour
                 }
             }
 
-            activeTaskUIElements.Add(desc, taskObj);
+            activeTaskUIElements[desc] = taskObj;
         }
     }
 
     // Bir görev çözüldüğünde çağrılır
     public void CompleteTask(string taskDescription)
     {
-        if (activeTaskUIElements.ContainsKey(taskDescription))
+        if (string.IsNullOrWhiteSpace(taskDescription)) return;
+
+        // GÜVENLİK KONTROLÜ: Eğer bu görev devre dışı bırakıldıysa ve listede yoksa hata vermeden çık!
+        if (!activeTaskUIElements.ContainsKey(taskDescription) || !taskTotalCounts.ContainsKey(taskDescription))
         {
-            // Tamamlanan sayısını 1 artırıyoruz
-            taskCurrentCounts[taskDescription]++;
-            int total = taskTotalCounts[taskDescription];
-            int current = taskCurrentCounts[taskDescription];
+            Debug.Log($"[TaskUIManager] '{taskDescription}' aktif görev listesinde yok (Devre dışı bırakılmış olabilir), işlem atlandı.");
+            return;
+        }
 
-            GameObject taskObj = activeTaskUIElements[taskDescription];
-            TextMeshProUGUI textComp = taskObj.GetComponentInChildren<TextMeshProUGUI>();
+        // Mevcut sayımı güncelle
+        if (!taskCurrentCounts.ContainsKey(taskDescription))
+        {
+            taskCurrentCounts[taskDescription] = 0;
+        }
 
-            if (textComp != null)
+        taskCurrentCounts[taskDescription]++;
+        int total = taskTotalCounts[taskDescription];
+        int current = taskCurrentCounts[taskDescription];
+
+        GameObject taskObj = activeTaskUIElements[taskDescription];
+        if (taskObj == null) return;
+
+        TextMeshProUGUI textComp = taskObj.GetComponentInChildren<TextMeshProUGUI>();
+
+        if (textComp != null)
+        {
+            if (total > 1)
             {
-                if (total > 1)
+                if (current < total)
                 {
-                    // Eğer hepsi bitmediyse sadece sayacı güncelliyoruz (Örn: 1/2)
-                    if (current < total)
-                    {
-                        textComp.text = $"- {taskDescription} ({current}/{total})";
-                    }
-                    else
-                    {
-                        // Hepsi bittiyse (Örn: 2/2) üstünü çizip rengini soluklaştırıyoruz
-                        textComp.text = $"<s>- {taskDescription} ({current}/{total})</s>";
-                        textComp.color = Color.gray;
-                    }
+                    textComp.text = $"- {taskDescription} ({current}/{total})";
                 }
                 else
                 {
-                    // Tekli görevse direkt üstünü çiziyoruz
-                    textComp.text = $"<s>- {taskDescription}</s>";
+                    textComp.text = $"<s>- {taskDescription} ({current}/{total})</s>";
                     textComp.color = Color.gray;
                 }
             }
+            else
+            {
+                textComp.text = $"<s>- {taskDescription}</s>";
+                textComp.color = Color.gray;
+            }
         }
+    }
+
+    /// <summary>
+    /// SummaryPanelManager için sadece gerçekten aktif olan görevleri hesaplar.
+    /// </summary>
+    public void GetTaskCounts(out int completedCount, out int uncompletedCount)
+    {
+        completedCount = 0;
+        int totalTasks = taskTotalCounts.Count;
+
+        foreach (var pair in taskTotalCounts)
+        {
+            string desc = pair.Key;
+            int required = pair.Value;
+            int current = taskCurrentCounts.ContainsKey(desc) ? taskCurrentCounts[desc] : 0;
+
+            if (current >= required)
+            {
+                completedCount++;
+            }
+        }
+
+        uncompletedCount = totalTasks - completedCount;
     }
 
     // Listeyi tamamen sıfırlar (Yeni güne geçerken)
