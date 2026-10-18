@@ -174,7 +174,7 @@ PrefabInstance:
     - target: {fileID: 6807519293667278778, guid: bd5038f9337dfde4cae91528304518f3, type: 3}
       propertyPath: targetRenderer
       value: 
-      objectReference: {fileID: 1094688942}
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1699,11 +1699,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!23 &1094688942 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 575296625627568316, guid: bd5038f9337dfde4cae91528304518f3, type: 3}
-  m_PrefabInstance: {fileID: 186953130}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1135780013
 GameObject:
   m_ObjectHideFlags: 0
