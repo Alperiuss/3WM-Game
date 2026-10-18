@@ -90,7 +90,7 @@ public class CurrencyManager : MonoBehaviour
         SetWarningActive(true);
 
         // Belirlenen süre kadar ekranda tut
-        yield return new WaitForSeconds(warningDuration);
+        yield return new WaitForSecondsRealtime(warningDuration);
 
         // Süre dolunca tekrar kapat
         SetWarningActive(false);
@@ -130,9 +130,13 @@ public class CurrencyManager : MonoBehaviour
 
     public void OnContinuePressed()
     {
-        if (shopPanel != null)
+        if (DayManager.Instance != null)
         {
-            shopPanel.SetActive(false);
+            DayManager.Instance.OnMarketContinuePressed();
+            return;
         }
+
+        if (shopPanel != null)
+            shopPanel.SetActive(false);
     }
 }

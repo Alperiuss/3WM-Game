@@ -37,13 +37,14 @@ public class PlayerRaycast : MonoBehaviour
 
     void CheckForInteractable()
     {
-        Ray ray = new Ray(transform.position, transform.forward);
+        Transform origin = Camera.main != null ? Camera.main.transform : transform;
+        Ray ray = new Ray(origin.position, origin.forward);
         RaycastHit hit;
 
         bool foundInteractable = false;
         InteractableObject hitInteractable = null;
 
-        if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
+        if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer, QueryTriggerInteraction.Ignore))
         {
             InteractableObject interactable = hit.collider.GetComponent<InteractableObject>();
             if (interactable == null)

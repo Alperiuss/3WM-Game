@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5169729931952616303}
   - component: {fileID: 6807519293667278778}
+  - component: {fileID: 5847392018473921104}
   m_Layer: 3
   m_Name: Wardrobe Item
   m_TagString: Untagged
@@ -54,6 +55,27 @@ MonoBehaviour:
   normalColor: {r: 1, g: 0, b: 0, a: 1}
   disabledColor: {r: 0.5, g: 0.5, b: 0.5, a: 1}
   interactedColor: {r: 0, g: 1, b: 0, a: 1}
+--- !u!65 &5847392018473921104
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6544516689080529621}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 1.4, y: 2.2, z: 0.65}
+  m_Center: {x: 0, y: 1.05, z: 0.18}
 --- !u!1 &7468548853071522828
 GameObject:
   m_ObjectHideFlags: 0
@@ -230,6 +252,10 @@ PrefabInstance:
     - target: {fileID: 1804101809923787320, guid: f925146e97b574945b581269a9251c10, type: 3}
       propertyPath: m_Name
       value: Bookshelf
+      objectReference: {fileID: 0}
+    - target: {fileID: 1804101809923787320, guid: f925146e97b574945b581269a9251c10, type: 3}
+      propertyPath: m_Layer
+      value: 3
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []

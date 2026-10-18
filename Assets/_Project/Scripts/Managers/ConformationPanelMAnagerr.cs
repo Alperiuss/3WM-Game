@@ -81,16 +81,14 @@ public class ConfirmationPanelMAnager : MonoBehaviour
 
     private IEnumerator HideAfterDelay(float delay)
     {
-        yield return new WaitForSeconds(delay);
+        yield return new WaitForSecondsRealtime(delay);
         HidePanel();
     }
 
     private void OnYesClicked()
     {
         if (pendingItemCard != null)
-        {
             pendingItemCard.ConfirmPurchase();
-        }
 
         HidePanel();
     }

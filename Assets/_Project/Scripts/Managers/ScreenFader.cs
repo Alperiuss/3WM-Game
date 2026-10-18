@@ -10,6 +10,8 @@ public class ScreenFader : MonoBehaviour
     [SerializeField] private CanvasGroup canvasGroup;
     [SerializeField] private float defaultFadeDuration = 0.6f;
 
+    private Coroutine runningTransition;
+
     private void Awake()
     {
         if (Instance == null)
@@ -36,7 +38,10 @@ public class ScreenFader : MonoBehaviour
     public void FadeTransition(System.Action onHalfWay, System.Action onComplete = null, float duration = -1f)
     {
         float dur = duration > 0 ? duration : defaultFadeDuration;
-        StartCoroutine(TransitionRoutine(onHalfWay, onComplete, dur));
+        if (runningTransition != null)
+            StopCoroutine(runningTransition);
+
+        runningTransition = StartCoroutine(TransitionRoutine(onHalfWay, onComplete, dur));
     }
 
     private IEnumerator TransitionRoutine(System.Action onHalfWay, System.Action onComplete, float duration)
@@ -52,8 +57,8 @@ public class ScreenFader : MonoBehaviour
         // 3. Adım: Fade In (Ekran açılıyor)
         yield return FadeRoutine(1f, 0f, duration);
 
-        // 4. Adım: Ekran tamamen açıldıktan sonra tetiklenen olay (Radyonun başlaması vb.)
         onComplete?.Invoke();
+        runningTransition = null;
     }
 
     private IEnumerator FadeRoutine(float startAlpha, float endAlpha, float duration)

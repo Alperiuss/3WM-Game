@@ -42,6 +42,7 @@ public class InteractableRandomChance : MonoBehaviour
     private bool isEarthquakeActive = false;
     private bool isDayCompletedSuccessfully = false;
     public int CurrentDay => currentDay;
+    public bool WasDayCompletedSuccessfully => isDayCompletedSuccessfully;
 
     private void Awake()
     {
@@ -76,7 +77,10 @@ public class InteractableRandomChance : MonoBehaviour
 
             if (isStressActive)
             {
-                float currentFillRate = baseStressFillRate + (activeNoiseMakersCount * noiseMakerPenaltyRate);
+                float panicMultiplier = ItemEffectsManager.Instance != null
+                    ? ItemEffectsManager.Instance.panicRateMultiplier
+                    : 1f;
+                float currentFillRate = (baseStressFillRate + (activeNoiseMakersCount * noiseMakerPenaltyRate)) * panicMultiplier;
                 currentStress += currentFillRate * Time.deltaTime;
                 currentStress = Mathf.Clamp(currentStress, 0f, maxStress);
 
@@ -149,7 +153,8 @@ public class InteractableRandomChance : MonoBehaviour
 
         foreach (var obj in allInteractable)
         {
-            obj.SetInteractableState(false);
+            if (obj != null)
+                obj.SetInteractableState(false);
         }
 
         List<InteractableObject> shuffledList = new List<InteractableObject>(allInteractable);
@@ -171,6 +176,9 @@ public class InteractableRandomChance : MonoBehaviour
 
         for (int i = 0; i < countToActivate; i++)
         {
+            if (shuffledList[i] == null)
+                continue;
+
             shuffledList[i].SetInteractableState(true);
 
             if (shuffledList[i].Data != null)
@@ -197,7 +205,9 @@ public class InteractableRandomChance : MonoBehaviour
     public void AdvanceToNextDay()
     {
         currentDay++;
-        StartNewDay();
+        isEarthquakeActive = false;
+        isTimerRunning = false;
+        isDayCompletedSuccessfully = false;
     }
 
     public void NotifyObjectResolved(string taskDescription, InteractableData resolvedData)
@@ -260,6 +270,8 @@ public class InteractableRandomChance : MonoBehaviour
         }
 
         float currentMagnitude = baseEarthquakeMagnitude + (currentDay * magnitudeMultiplierPerDay);
+        if (ItemEffectsManager.Instance != null && ItemEffectsManager.Instance.hasHouseUpgrade)
+            currentMagnitude *= 0.7f;
 
         if (CameraShake.Instance != null)
         {

@@ -138,21 +138,18 @@ public class TaskUIManager : MonoBehaviour
     public void GetTaskCounts(out int completedCount, out int uncompletedCount)
     {
         completedCount = 0;
-        int totalTasks = taskTotalCounts.Count;
+        int totalItems = 0;
 
         foreach (var pair in taskTotalCounts)
         {
-            string desc = pair.Key;
             int required = pair.Value;
-            int current = taskCurrentCounts.ContainsKey(desc) ? taskCurrentCounts[desc] : 0;
-
-            if (current >= required)
-            {
-                completedCount++;
-            }
+            int current = taskCurrentCounts.ContainsKey(pair.Key) ? taskCurrentCounts[pair.Key] : 0;
+            current = Mathf.Clamp(current, 0, required);
+            completedCount += current;
+            totalItems += required;
         }
 
-        uncompletedCount = totalTasks - completedCount;
+        uncompletedCount = Mathf.Max(0, totalItems - completedCount);
     }
 
     // Listeyi tamamen sıfırlar (Yeni güne geçerken)
