@@ -23,15 +23,9 @@ public class CameraShake : MonoBehaviour
     {
         Debug.Log(">>> DEPREM BAŞLADI! Süre: " + duration + " sn, Şiddet: " + magnitude);
 
+        // Deprem sesi InteractableRandomChance tarafından GameSfx ile çalınır (kamera bileşeni olmasa da duyulsun diye)
         if (perlinComponent != null)
         {
-            if (AudioManager.Instance != null)
-            {
-                // AudioManager listesinde ses "Eathquake" adıyla kayıtlı; ikisini de dene
-                if (AudioManager.Instance.HasSFX("Earthquake")) AudioManager.Instance.PlaySFX("Earthquake");
-                else AudioManager.Instance.PlaySFX("Eathquake");
-                
-           }
             // Deprem başladığında titremeyi aç ve şiddeti ayarla
             perlinComponent.AmplitudeGain = magnitude * 10f;
             perlinComponent.FrequencyGain = 2.0f;
@@ -43,11 +37,6 @@ public class CameraShake : MonoBehaviour
         // Süre bitince titremeyi tamamen sıfırla
         if (perlinComponent != null)
         {
-            if (AudioManager.Instance != null)
-            {
-                AudioManager.Instance.StopSFX("Earthquake");
-                AudioManager.Instance.StopSFX("Eathquake");
-            }
             perlinComponent.AmplitudeGain = 0f;
             perlinComponent.FrequencyGain = 0f;
         }

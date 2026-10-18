@@ -1,15 +1,16 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 /// <summary>
-/// Alarm eşyasının göstergesi: hedef tehlikenin üstünde nabız gibi atan bir işaret ve mesafe yazısı.
+/// Tehlike göstergesi (Alarm eşyası ve 1. gün rehberi): hedefin üstünde nabız gibi atan bir işaret ve mesafe yazısı.
 /// Hedef ekran dışındaysa işaret ekranın kenarına yapışır ve yönü gösterir.
-/// UI tamamen kod ile kurulur; sahnede hazır obje gerekmez. Hedef çözülünce kendiliğinden kaybolur.
+/// Aynı anda birden fazla hedef işaretlenebilir. UI tamamen kod ile kurulur; hedef çözülünce işareti kaybolur.
 /// </summary>
 public class ItemLocatorMarker : MonoBehaviour
 {
-    private static ItemLocatorMarker active;
+    private static readonly List<ItemLocatorMarker> actives = new List<ItemLocatorMarker>();
 
     private const float EdgeMargin = 80f;
     private static readonly Color MarkerColor = new Color(1f, 0.78f, 0.1f, 1f);
@@ -22,25 +23,40 @@ public class ItemLocatorMarker : MonoBehaviour
     private RectTransform diamond;
     private TMP_Text distanceText;
 
+    /// <summary>Hedefi işaretler (önceki işaretler kalır).</summary>
     public static void Show(InteractableObject target, TMP_FontAsset font)
     {
-        Hide();
         if (target == null) return;
+        foreach (ItemLocatorMarker m in actives)
+        {
+            if (m != null && m.target == target) return;
+        }
 
-        GameObject go = new GameObject("AlarmMarker (" + target.name + ")");
-        active = go.AddComponent<ItemLocatorMarker>();
-        active.Build(target, font);
+        GameObject go = new GameObject("HazardMarker (" + target.name + ")");
+        ItemLocatorMarker marker = go.AddComponent<ItemLocatorMarker>();
+        marker.Build(target, font);
+        actives.Add(marker);
     }
 
+    /// <summary>Bütün işaretleri kaldırır.</summary>
     public static void Hide()
     {
-        if (active != null) Destroy(active.gameObject);
-        active = null;
+        foreach (ItemLocatorMarker m in actives)
+        {
+            if (m != null) Destroy(m.gameObject);
+        }
+        actives.Clear();
+    }
+
+    private void Remove()
+    {
+        actives.Remove(this);
+        Destroy(gameObject);
     }
 
     private void OnDestroy()
     {
-        if (active == this) active = null;
+        actives.Remove(this);
     }
 
     private void Build(InteractableObject markedTarget, TMP_FontAsset font)
@@ -94,7 +110,7 @@ public class ItemLocatorMarker : MonoBehaviour
     {
         if (target == null || !target.IsInteractable)
         {
-            Hide();
+            Remove();
             return;
         }
 

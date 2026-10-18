@@ -58,6 +58,7 @@ public class InteractableObject : MonoBehaviour
     private Vector3 modelRestPosition;
     private bool tintApplied = false;
     private Coroutine flashRoutine;
+    private AudioSource noiseSource;
 
     public bool IsInteractable => isInteractable && !isResolved;
     public float RequiredHoldTime => requiredHoldTime;
@@ -182,6 +183,50 @@ public class InteractableObject : MonoBehaviour
             ClearTint();
             if (modelRoot != null) modelRoot.localPosition = modelRestPosition;
         }
+
+        UpdateNoise(active);
+    }
+
+    // ------------------------------------------------------------------ Gürültü sesi (telefon, çalar saat, kumanda)
+
+    /// <summary>Gürültü yapan eşyanın döngüsel sesi (veride isNoiseMaker işaretli olanlar).</summary>
+    private static string GetNoiseClip(InteractableData d)
+    {
+        if (d == null || !d.isNoiseMaker || string.IsNullOrEmpty(d.objectName)) return null;
+        string n = d.objectName.ToLowerInvariant();
+        if (n.Contains("phone")) return GameSfx.PhoneBuzz;
+        if (n.Contains("clock")) return GameSfx.AlarmClock;
+        if (n.Contains("remote")) return GameSfx.TvStatic;
+        return null;
+    }
+
+    private void UpdateNoise(bool active)
+    {
+        if (active)
+        {
+            if (noiseSource == null)
+            {
+                string clipName = GetNoiseClip(data);
+                if (clipName == null) return;
+                noiseSource = GameSfx.CreateWorldLoop(gameObject, clipName, 0.9f);
+                if (noiseSource == null) return;
+            }
+            if (!noiseSource.isPlaying)
+            {
+                noiseSource.time = Random.Range(0f, noiseSource.clip.length * 0.9f);
+                noiseSource.Play();
+            }
+        }
+        else if (noiseSource != null && noiseSource.isPlaying)
+        {
+            noiseSource.Stop();
+        }
+    }
+
+    /// <summary>Gün bittiğinde (deprem sonrası, ölüm ekranı) hâlâ çalan eşyaları susturur.</summary>
+    public void SilenceNoise()
+    {
+        if (noiseSource != null) noiseSource.Stop();
     }
 
     private void Update()
@@ -248,5 +293,6 @@ public class InteractableObject : MonoBehaviour
     private void OnDisable()
     {
         ClearTint();
+        SilenceNoise();
     }
 }

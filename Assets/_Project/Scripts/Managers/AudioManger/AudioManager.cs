@@ -39,6 +39,9 @@ public class AudioManager : MonoBehaviour
     [Header("Audio Clips List")]
     [SerializeField] private Sound[] sounds;
 
+    /// <summary>SFX çıkış grubu (diğer ses kaynakları da ayarlardaki SFX seviyesine uysun diye).</summary>
+    public AudioMixerGroup SfxGroup => sfxSource != null ? sfxSource.outputAudioMixerGroup : null;
+
     // Statik Dinleyici Olayı (Event listener)
     public static Action<string, float> OnVolumeChanged;
 

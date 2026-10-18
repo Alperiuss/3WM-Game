@@ -14,9 +14,19 @@ public class InteractableRandomChance : MonoBehaviour
 
     [Header("Timer Settings")]
     [Tooltip("1. günün süresi (saniye)")]
-    [SerializeField] private float baseDayTimeLimit = 35f;
-    [Tooltip("Her yeni güne eklenen birikimli süre (2. gün +5, 3. gün +10 ...)")]
-    [SerializeField] private float extraSecondsPerDay = 5f;
+    [SerializeField] private float baseDayTimeLimit = 60f;
+    [Tooltip("Her yeni güne eklenen birikimli süre (2. gün +10, 3. gün +20 ...). Marketteki Ev Geliştirmesi bundan ayrı eklenir.")]
+    [SerializeField] private float extraSecondsPerDay = 10f;
+
+    [Header("Audio")]
+    [Tooltip("Deprem öncesi siren, geri sayımın son kaç saniyesinde başlasın")]
+    [SerializeField] private float sirenLeadTime = 10f;
+    [Range(0f, 1f)] [SerializeField] private float sirenVolume = 0.7f;
+    [Range(0f, 1f)] [SerializeField] private float earthquakeVolume = 1f;
+
+    [Header("First Day Guide")]
+    [Tooltip("1. günde bütün görev eşyalarının yeri ekranda işaretlensin (yeni oyuncular evi tanısın diye)")]
+    [SerializeField] private bool markAllTasksOnFirstDay = true;
     private float currentTimer;
     private bool isTimerRunning = false;
 
@@ -97,6 +107,12 @@ public class InteractableRandomChance : MonoBehaviour
         {
             BeginEarthquake();
             return;
+        }
+
+        // Deprem yaklaşırken siren: son saniyelerde veya görevler bitip sığınma aşaması başlayınca
+        if (!GameSfx.IsLooping(GameSfx.Siren) && (currentTimer <= sirenLeadTime || isDayCompletedSuccessfully))
+        {
+            GameSfx.PlayLoop(GameSfx.Siren, GameSfx.Siren, sirenVolume, 1.2f);
         }
 
         if (currentTimer > 0f)
@@ -188,6 +204,7 @@ public class InteractableRandomChance : MonoBehaviour
             SafeZoneManager.Instance.HideZones();
 
         ItemLocatorMarker.Hide();
+        GameSfx.StopAllLoops();
         coverTimer = 0f;
 
         Debug.Log("--- GÜN " + currentDay + " BAŞLADI ---");
@@ -272,11 +289,16 @@ public class InteractableRandomChance : MonoBehaviour
             TaskUIManager.Instance.PopulateTasks(currentDayTaskDescriptions);
         }
 
-        // Alarm: bugünün tehlikelerinden birinin yeri ekranda işaretlenir
-        if (ItemEffectsManager.AlarmActive && countToActivate > 0)
+        TMP_FontAsset markerFont = timerText != null ? timerText.font : null;
+        if (currentDay == 1 && markAllTasksOnFirstDay)
         {
-            InteractableObject marked = shuffledList[Random.Range(0, countToActivate)];
-            ItemLocatorMarker.Show(marked, timerText != null ? timerText.font : null);
+            // 1. gün rehberi: yeni oyuncular evi tanımadığı için bütün görev eşyaları işaretlenir
+            for (int i = 0; i < countToActivate; i++) ItemLocatorMarker.Show(shuffledList[i], markerFont);
+        }
+        else if (ItemEffectsManager.AlarmActive && countToActivate > 0)
+        {
+            // Alarm: bugünün tehlikelerinden birinin yeri ekranda işaretlenir
+            ItemLocatorMarker.Show(shuffledList[Random.Range(0, countToActivate)], markerFont);
         }
 
         currentTimer = GetDayTimeLimit(currentDay);
@@ -351,6 +373,8 @@ public class InteractableRandomChance : MonoBehaviour
         isEarthquakeActive = true;
         isStressActive = false;
         ItemLocatorMarker.Hide();
+        GameSfx.StopLoop(GameSfx.Siren, 0.8f);
+        GameSfx.PlayLoop(GameSfx.Earthquake, GameSfx.Earthquake, earthquakeVolume, 0.25f);
 
         if (timerText != null)
         {
@@ -378,6 +402,9 @@ public class InteractableRandomChance : MonoBehaviour
             yield return new WaitForSeconds(earthquakeDuration);
         }
 
+        GameSfx.StopLoop(GameSfx.Earthquake, 1.2f);
+        SilenceAllNoise();
+
         if (SafeZoneManager.Instance != null)
             SafeZoneManager.Instance.HideZones();
 
@@ -398,12 +425,23 @@ public class InteractableRandomChance : MonoBehaviour
         }
     }
 
+    private void SilenceAllNoise()
+    {
+        if (allInteractable == null) return;
+        foreach (var obj in allInteractable)
+        {
+            if (obj != null) obj.SilenceNoise();
+        }
+    }
+
     private void PlayerDeath(DeathReason reason)
     {
         Debug.Log(">>> GAME OVER (" + reason + "): Ölüm ekranı açılıyor.");
         isTimerRunning = false;
         isStressActive = false;
         ItemLocatorMarker.Hide();
+        GameSfx.StopAllLoops(0.6f);
+        SilenceAllNoise();
 
         if (SafeZoneManager.Instance != null)
             SafeZoneManager.Instance.HideZones();
