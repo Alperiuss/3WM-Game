@@ -25,6 +25,11 @@ public class CameraShake : MonoBehaviour
 
         if (perlinComponent != null)
         {
+            if (AudioManager.Instance != null)
+            {
+                AudioManager.Instance.PlaySFX("Earthquake");
+                
+           }
             // Deprem başladığında titremeyi aç ve şiddeti ayarla
             perlinComponent.AmplitudeGain = magnitude * 10f;
             perlinComponent.FrequencyGain = 2.0f;
@@ -36,6 +41,10 @@ public class CameraShake : MonoBehaviour
         // Süre bitince titremeyi tamamen sıfırla
         if (perlinComponent != null)
         {
+            if (AudioManager.Instance != null && AudioManager.Instance.IsPlayingSFX("Earthquake"))
+            {
+                AudioManager.Instance.StopSFX("Earthquake");
+            }
             perlinComponent.AmplitudeGain = 0f;
             perlinComponent.FrequencyGain = 0f;
         }
