@@ -4,7 +4,26 @@ using UnityEngine.Audio;
 
 public class AudioManager : MonoBehaviour
 {
-    public static AudioManager Instance { get; private set; }
+    // =========================================================================
+    // ASLA NULL DÖNMEYEN GÜVENLİ SINGLETON
+    // =========================================================================
+    private static AudioManager instance;
+    public static AudioManager Instance
+    {
+        get
+        {
+            // Eğer instance herhangi bir sebeple null olursa sahnede ara ve bul
+            if (instance == null)
+            {
+                instance = FindFirstObjectByType<AudioManager>();
+            }
+            return instance;
+        }
+        private set
+        {
+            instance = value;
+        }
+    }
 
     [Header("Audio Mixer Settings")]
     [SerializeField] private AudioMixer mainAudioMixer;
@@ -25,12 +44,15 @@ public class AudioManager : MonoBehaviour
 
     private void Awake()
     {
-        if (Instance == null)
+        if (instance == null)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject);
+            instance = this;
+            if (transform.parent == null)
+            {
+                DontDestroyOnLoad(gameObject);
+            }
         }
-        else
+        else if (instance != this)
         {
             Destroy(gameObject);
             return;
@@ -39,19 +61,22 @@ public class AudioManager : MonoBehaviour
         InitializeSoundDictionary();
     }
 
+    private void Start()
+    {
+        // Oyun açıldığında PlayerPrefs'e kaydedilmiş ses ayarlarını AudioMixer'a yükle
+        LoadAndApplySavedVolumes();
+    }
+
     private void OnEnable()
     {
-        // Ses değişim olayına kendisini dinleyici olarak ekler
         OnVolumeChanged += HandleVolumeChange;
     }
 
     private void OnDisable()
     {
-        // Temizlik: Dinleyici bağlantısını koparır
         OnVolumeChanged -= HandleVolumeChange;
     }
 
-    // 1. DÜZELTME: for döngüsü ve null kontrolü eklendi
     private void InitializeSoundDictionary()
     {
         if (sounds == null) return;
@@ -69,6 +94,8 @@ public class AudioManager : MonoBehaviour
             sounds[i].source.volume = sounds[i].volume;
             sounds[i].source.pitch = sounds[i].pitch;
             sounds[i].source.loop = sounds[i].loop;
+            sounds[i].source.playOnAwake = false;
+            sounds[i].source.spatialBlend = 0f; // 2D Ses (Her yerden eşit ve net duyulur)
         }
     }
 
@@ -92,18 +119,33 @@ public class AudioManager : MonoBehaviour
         return PlayerPrefs.GetFloat(parameterName, defaultValue);
     }
 
+    private void LoadAndApplySavedVolumes()
+    {
+        ApplyVolumeFromPrefs(MASTER_KEY);
+        ApplyVolumeFromPrefs(MUSIC_KEY);
+        ApplyVolumeFromPrefs(SFX_KEY);
+    }
+
+    private void ApplyVolumeFromPrefs(string key)
+    {
+        float savedValue = PlayerPrefs.GetFloat(key, 1f); // Varsayılan: 1.0 (Full ses)
+        HandleVolumeChange(key, savedValue);
+    }
+
     #endregion
 
     #region Play Audio Methods
 
     public void PlaySFX(string name)
     {
-        if (sounds == null) return;
+        if (sounds == null || string.IsNullOrEmpty(name)) return;
 
-        Sound s = Array.Find(sounds, sound => sound != null && sound.name == name);
+        // Büyük / küçük harf veya boşluk farkı gözetmeksizin ismi bulur
+        Sound s = Array.Find(sounds, sound => sound != null && string.Equals(sound.name.Trim(), name.Trim(), StringComparison.OrdinalIgnoreCase));
+
         if (s == null)
         {
-            Debug.LogWarning($"[AudioManager]: '{name}' adında ses efekti bulunamadı!");
+            Debug.LogWarning($"[AudioManager]: '{name}' adında ses efekti listede bulunamadı! Inspector'daki ismi kontrol edin.");
             return;
         }
 
@@ -112,18 +154,47 @@ public class AudioManager : MonoBehaviour
             s.source.Play();
         }
     }
+        // AudioManager.cs içine eklenecek:
+
+    public void StopSFX(string name)
+    {
+        if (sounds == null || string.IsNullOrEmpty(name)) return;
+        Sound s = Array.Find(sounds, sound => sound != null && string.Equals(sound.name.Trim(), name.Trim(), StringComparison.OrdinalIgnoreCase));
+        if (s != null && s.source != null && s.source.isPlaying)
+        {
+            s.source.Stop();
+        }
+    }
+
+    public bool IsPlayingSFX(string name)
+    {
+        if (sounds == null || string.IsNullOrEmpty(name)) return false;
+        Sound s = Array.Find(sounds, sound => sound != null && string.Equals(sound.name.Trim(), name.Trim(), StringComparison.OrdinalIgnoreCase));
+        return s != null && s.source != null && s.source.isPlaying;
+    }
 
     public void PlayOneShot(AudioClip clip, float volume = 1f)
     {
-        if (clip != null && sfxSource != null)
+        if (clip == null) return;
+
+        if (sfxSource == null)
         {
-            sfxSource.PlayOneShot(clip, volume);
+            sfxSource = gameObject.AddComponent<AudioSource>();
+            sfxSource.spatialBlend = 0f;
         }
+
+        sfxSource.PlayOneShot(clip, volume);
     }
 
     public void PlayMusic(AudioClip musicClip)
     {
-        if (musicSource == null || musicClip == null) return;
+        if (musicClip == null) return;
+
+        if (musicSource == null)
+        {
+            musicSource = gameObject.AddComponent<AudioSource>();
+            musicSource.spatialBlend = 0f;
+        }
 
         musicSource.clip = musicClip;
         musicSource.loop = true;
@@ -133,7 +204,6 @@ public class AudioManager : MonoBehaviour
     #endregion
 }
 
-// 2. DÜZELTME: Eksik olan Sound sınıfı dosyanın altına eklendi
 [System.Serializable]
 public class Sound
 {
