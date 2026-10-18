@@ -44,10 +44,10 @@ public class ItemEffectsManager : MonoBehaviour
         // -------------------------------------------------------------
         // 1. TAMİR & İNŞAAT EŞYALARI
         // -------------------------------------------------------------
-        hasQuickRepairKit = IsBought("quick_repair_kit");
-        hasElectricalTape = IsBought("electrical_tape");
-        hasScrew          = IsBought("screw");
-        hasHouseUpgrade   = IsBought("house_upgrade");
+        hasQuickRepairKit = IsOwned("item_repairkit_01", "quick_repair_kit");
+        hasElectricalTape = IsOwned("item_electricaltape_01", "electrical_tape");
+        hasScrew          = IsOwned("item_screw_01", "screw");
+        hasHouseUpgrade   = IsOwned("item_houseImprove_01", "house_upgrade");
 
         // Hızlı tamir kiti alındıysa tamir hızını 1.5x (%50 daha hızlı) yap, yoksa normal 1.0x
         repairSpeedMultiplier = hasQuickRepairKit ? 1.5f : 1.0f;
@@ -56,10 +56,10 @@ public class ItemEffectsManager : MonoBehaviour
         // -------------------------------------------------------------
         // 2. HAYATTA KALMA & KARAKTER EŞYALARI
         // -------------------------------------------------------------
-        hasSedative    = IsBought("sedative");
-        hasDisasterBag = IsBought("disaster_bag");
-        hasGasAlarm    = IsBought("gas_alarm");
-        hasLocker      = IsBought("locker");
+        hasSedative    = IsOwned("item_medication_01", "sedative");
+        hasDisasterBag = IsOwned("item_firstAid_01", "disaster_bag");
+        hasGasAlarm    = IsOwned("item_alarm_01", "gas_alarm");
+        hasLocker      = IsOwned("item_Lock_01", "locker");
 
         // Sakinleştirici alındıysa panik dolumunu %30 yavaşlat (0.7x), yoksa normal 1.0x
         panicRateMultiplier = hasSedative ? 0.7f : 1.0f;
@@ -70,9 +70,18 @@ public class ItemEffectsManager : MonoBehaviour
     /// <summary>
     /// ItemCard'ın kaydettiği "Bought_" anahtarına bakar.
     /// </summary>
-    private bool IsBought(string itemID)
+    private bool IsOwned(params string[] itemIDs)
     {
-        return PlayerPrefs.GetInt("Bought_" + itemID, 0) == 1;
+        for (int i = 0; i < itemIDs.Length; i++)
+        {
+            string id = itemIDs[i];
+            if (PlayerPrefs.GetInt("Bought_" + id, 0) == 1)
+                return true;
+            if (PlayerPrefs.GetInt("Level_" + id, 0) > 0)
+                return true;
+        }
+
+        return false;
     }
 
     // =========================================================================

@@ -24,7 +24,23 @@ public class InteractableObject : MonoBehaviour
 
     public bool IsInteractable => isInteractable && !isResolved;
     public float RequiredHoldTime => requiredHoldTime;
-    public InteractableData Data => data; // Veriye dışarıdan güvenli erişim
+    public InteractableData Data => data;
+
+    private void Awake()
+    {
+        AlignChildColliderLayers();
+    }
+
+    private void AlignChildColliderLayers()
+    {
+        int layer = gameObject.layer;
+        Collider[] colliders = GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] != null)
+                colliders[i].gameObject.layer = layer;
+        }
+    }
 
     private void Start()
     {

@@ -9,13 +9,13 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
     [SerializeField] private string itemID = "item_unique_id";
     [SerializeField] private string itemName = "Kitchen Item";
     [TextArea(2, 5)]
-    [SerializeField] private string itemDescription = "Bu eşya mutfağınızın verimliliğini artırır."; // YENİ EKLENEN AÇIKLAMA ALANI
+    [SerializeField] private string itemDescription = "Bu eşya mutfağınızın verimliliğini artırır.";
 
     [Header("Upgrade Settings")]
-    [SerializeField] private bool isUpgradable = false; 
+    [SerializeField] private bool isUpgradable = false;
     [SerializeField] private int basePrice = 100;
-    [SerializeField] private float priceMultiplier = 1.5f; 
-    [SerializeField] private int maxLevel = 5;            
+    [SerializeField] private float priceMultiplier = 1.5f;
+    [SerializeField] private int maxLevel = 5;
 
     [Header("UI References")]
     [SerializeField] private Button buyButton;
@@ -25,17 +25,28 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
     private int currentLevel = 0;
     private bool isSinglePurchased = false;
     private int currentPrice;
+    private bool listenersBound;
+
+    private void OnEnable()
+    {
+        BindListeners();
+        RefreshFromSave();
+    }
 
     private void Start()
     {
-        LoadData();
-        CalculatePrice();
-        UpdateCardUI();
+        BindListeners();
+        RefreshFromSave();
+    }
 
-        if (buyButton != null)
-        {
-            buyButton.onClick.AddListener(OpenConfirmationPopup);
-        }
+    private void BindListeners()
+    {
+        if (listenersBound || buyButton == null)
+            return;
+
+        buyButton.onClick.RemoveListener(OpenConfirmationPopup);
+        buyButton.onClick.AddListener(OpenConfirmationPopup);
+        listenersBound = true;
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -44,73 +55,76 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
     }
 
     private void OpenConfirmationPopup()
-{
-    bool isCompleted = isUpgradable ? (currentLevel >= maxLevel) : isSinglePurchased;
-    if (isCompleted) return;
-
-    if (ConfirmationPanelMAnager.Instance != null)
     {
-        // Inspector'dan girilen itemName ve itemDescription verilerini panele aktarır
-        ConfirmationPanelMAnager.Instance.OpenConfirmation(this, itemName, itemDescription);
+        if (IsCompleted())
+            return;
+
+        if (ConfirmationPanelMAnager.Instance != null)
+            ConfirmationPanelMAnager.Instance.OpenConfirmation(this, itemName, itemDescription);
     }
-}
 
-    public void ConfirmPurchase()
+    public bool ConfirmPurchase()
     {
+        if (IsCompleted())
+            return false;
+
+        if (CurrencyManager.Instance == null)
+            return false;
+
+        int price = isUpgradable ? currentPrice : basePrice;
+        if (!CurrencyManager.Instance.TrySpendFame(price))
+            return false;
+
         if (isUpgradable)
-        {
-            if (currentLevel >= maxLevel) return;
-
-            if (CurrencyManager.Instance != null && CurrencyManager.Instance.TrySpendFame(currentPrice))
-            {
-                currentLevel++;
-                SaveData();
-                CalculatePrice();
-                UpdateCardUI();
-                Debug.Log($"[UPGRADE SUCCESS]: {itemName} Level {currentLevel} oldu!");
-            }
-        }
+            currentLevel++;
         else
-        {
-            if (isSinglePurchased) return;
+            isSinglePurchased = true;
 
-            if (CurrencyManager.Instance != null && CurrencyManager.Instance.TrySpendFame(basePrice))
-            {
-                isSinglePurchased = true;
-                SaveData();
-                UpdateCardUI();
-                Debug.Log($"[PURCHASE SUCCESS]: {itemName} satın alındı!");
-                if (AudioManager.Instance != null)
-                {
-                    AudioManager.Instance.PlaySFX("Coins");
-                }
-            }
-        }
+        SaveData();
+        CalculatePrice();
+        UpdateCardUI();
+
+        if (ItemEffectsManager.Instance != null)
+            ItemEffectsManager.Instance.LoadAllItemEffects();
+
+        if (AudioManager.Instance != null)
+            AudioManager.Instance.PlaySFX("Coins");
+
+        return true;
+    }
+
+    private bool IsCompleted()
+    {
+        return isUpgradable ? currentLevel >= maxLevel : isSinglePurchased;
+    }
+
+    private void RefreshFromSave()
+    {
+        LoadData();
+        CalculatePrice();
+        UpdateCardUI();
     }
 
     private void CalculatePrice()
     {
         if (isUpgradable)
-        {
             currentPrice = Mathf.RoundToInt(basePrice * Mathf.Pow(priceMultiplier, currentLevel));
-        }
         else
-        {
             currentPrice = basePrice;
-        }
     }
 
     private void UpdateCardUI()
     {
-        bool isCompleted = isUpgradable ? (currentLevel >= maxLevel) : isSinglePurchased;
+        bool isCompleted = IsCompleted();
 
         if (buyButton != null)
         {
+            buyButton.interactable = !isCompleted;
             Image buttonImage = buyButton.GetComponent<Image>();
             if (buttonImage != null)
             {
                 Color buttonColor = buttonImage.color;
-                buttonColor.a = isCompleted ? 1f : 0f; 
+                buttonColor.a = isCompleted ? 1f : 0f;
                 buttonImage.color = buttonColor;
             }
         }
@@ -124,35 +138,34 @@ public class ItemCard : MonoBehaviour, IPointerClickHandler
             }
 
             if (priceText != null)
-            {
-                priceText.text = (currentLevel >= maxLevel) ? "Completed" : $"{currentPrice} ";
-            }
+                priceText.text = (currentLevel >= maxLevel) ? "Completed" : $"{currentPrice} XP";
         }
         else
         {
             if (levelText != null)
-            {
                 levelText.gameObject.SetActive(false);
-            }
 
             if (priceText != null)
-            {
                 priceText.text = isSinglePurchased ? "Purchased" : $"{basePrice} XP";
-            }
         }
     }
 
     private void SaveData()
     {
-        if (isUpgradable) PlayerPrefs.SetInt("Level_" + itemID, currentLevel);
-        else PlayerPrefs.SetInt("Bought_" + itemID, isSinglePurchased ? 1 : 0);
+        if (isUpgradable)
+            PlayerPrefs.SetInt("Level_" + itemID, currentLevel);
+        else
+            PlayerPrefs.SetInt("Bought_" + itemID, isSinglePurchased ? 1 : 0);
+
         PlayerPrefs.Save();
     }
 
     private void LoadData()
     {
-        if (isUpgradable) currentLevel = PlayerPrefs.GetInt("Level_" + itemID, 0);
-        else isSinglePurchased = PlayerPrefs.GetInt("Bought_" + itemID, 0) == 1;
+        if (isUpgradable)
+            currentLevel = PlayerPrefs.GetInt("Level_" + itemID, 0);
+        else
+            isSinglePurchased = PlayerPrefs.GetInt("Bought_" + itemID, 0) == 1;
     }
 
     public string ItemName => itemName;
